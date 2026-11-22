@@ -20,6 +20,14 @@ mod web {
 
     use crate::host_bridge::{self, CommandQueue, HostCommand, LOADING_ID};
 
+    fn fit_camera(session: &Session, camera: &mut Camera) {
+        if let Ok(b) = solidcraft_engine::view::bounds(session)
+            && !b.is_empty()
+        {
+            camera.fit(&solidcraft_engine::render::view_bounds(&b));
+        }
+    }
+
     struct StudioApp {
         session: Session,
         camera: Camera,
@@ -41,9 +49,7 @@ mod web {
             }
             let mut camera = Camera::default();
             let cached_scene = solidcraft_engine::view::scene(&session, &camera).ok();
-            if let Some(sc) = &cached_scene {
-                camera.fit(&sc.bounds);
-            }
+            fit_camera(&session, &mut camera);
             let gpu_scene = cached_scene.as_ref().map(scene_geometry);
             Self {
                 session,
@@ -77,9 +83,7 @@ mod web {
                         Ok(doc) => {
                             self.session = Session::new(doc);
                             self.rebuild_scene();
-                            if let Some(sc) = &self.cached_scene {
-                                self.camera.fit(&sc.bounds);
-                            }
+                            fit_camera(&self.session, &mut self.camera);
                             self.status = format!("Opened {name}");
                         }
                         Err(err) => {
@@ -118,9 +122,7 @@ mod web {
                     Ok(json!({ "name": name, "byteLength": bytes.len() }))
                 }
                 "view.fit" => {
-                    if let Some(sc) = &self.cached_scene {
-                        self.camera.fit(&sc.bounds);
-                    }
+                    fit_camera(&self.session, &mut self.camera);
                     Ok(json!({ "ok": true }))
                 }
                 _ => {
@@ -150,10 +152,8 @@ mod web {
                 ui.horizontal(|ui| {
                     ui.strong("Fogbreak Solid Studio");
                     ui.separator();
-                    if ui.button("Fit").clicked()
-                        && let Some(sc) = &self.cached_scene
-                    {
-                        self.camera.fit(&sc.bounds);
+                    if ui.button("Fit").clicked() {
+                        fit_camera(&self.session, &mut self.camera);
                     }
                     if ui.button("Iso").clicked() {
                         let (yaw, pitch) = StandardView::Iso.angles();
