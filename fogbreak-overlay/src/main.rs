@@ -98,12 +98,89 @@ mod web {
                             .ok_or_else(|| "Unable to render PNG screenshot".to_string());
                         let _ = tx.send(res);
                     }
+                    HostCommand::Export { format, tx } => {
+                        let res = self.export_bytes(&format);
+                        let _ = tx.send(res);
+                    }
+                    HostCommand::Import { name, bytes, tx } => {
+                        let res = self.import_bytes(&name, bytes);
+                        let _ = tx.send(res);
+                    }
                     HostCommand::Request { method, params, tx } => {
                         let out = self.handle_request(&method, &params);
                         let _ = tx.send(out);
                     }
                 }
             }
+        }
+
+        fn export_bytes(&self, format: &str) -> Result<Vec<u8>, String> {
+            let fmt = format.trim().trim_start_matches('.').to_ascii_lowercase();
+            let name = self.session.save_as_name();
+            if fmt == "sc" || fmt == "design" {
+                return solidcraft_io::write_design(&self.session.doc).map_err(|e| e.to_string());
+            }
+            let world = self.session.world_state().map_err(|e| e.to_string())?;
+            if fmt == "glb" {
+                return solidcraft_io::export_glb(
+                    &self.session.doc,
+                    &self.session.model.state(),
+                    &world,
+                    &[],
+                    &name,
+                    solidcraft_io::MeshQuality::Standard,
+                )
+                .map_err(|e| e.to_string());
+            }
+            let io_fmt = match fmt.as_str() {
+                "step" | "stp" => solidcraft_io::Format::Step,
+                "3mf" => solidcraft_io::Format::ThreeMf,
+                "stl" => solidcraft_io::Format::StlBinary,
+                "obj" => solidcraft_io::Format::Obj,
+                "iges" | "igs" => solidcraft_io::Format::Iges,
+                _ => return Err(format!("unsupported export format `{fmt}`")),
+            };
+            if io_fmt == solidcraft_io::Format::Step && !self.session.doc.occurrences.is_empty() {
+                return solidcraft_io::step_assembly(
+                    &self.session.doc,
+                    &self.session.doc.painted(&self.session.model.state()),
+                    &name,
+                )
+                .map_err(|e| e.to_string());
+            }
+            let painted = self.session.doc.painted(&world);
+            solidcraft_io::export_with_metadata(&painted, &[], io_fmt, &name, &self.session.doc.metadata)
+                .map_err(|e| e.to_string())
+        }
+
+        fn import_bytes(&mut self, name: &str, bytes: Vec<u8>) -> Result<Value, String> {
+            let byte_len = bytes.len();
+            if solidcraft_io::is_design_path(name) {
+                let doc = solidcraft_io::read_design(&bytes).map_err(|e| e.to_string())?;
+                self.session = Session::new(doc);
+                self.rebuild_scene();
+                fit_camera(&self.session, &mut self.camera);
+                self.status = format!("Opened {name}");
+                return Ok(json!({ "ok": true, "name": name, "byteLength": byte_len }));
+            }
+            if solidcraft_io::is_step_path(name) || solidcraft_io::is_mesh_path(name) {
+                let cmd = if solidcraft_io::is_step_path(name) { "file.insert_step" } else { "file.insert_mesh" };
+                let vpath = format!("/import/{name}");
+                solidcraft_io::vfs::insert(&vpath, bytes);
+                let res = self.session.execute(cmd, &json!({ "path": vpath })).map_err(|e| e.to_string());
+                let _ = solidcraft_io::vfs::remove(&vpath);
+                let val = res?;
+                self.rebuild_scene();
+                fit_camera(&self.session, &mut self.camera);
+                self.status = format!("Imported {name}");
+                return Ok(json!({ "ok": true, "name": name, "byteLength": byte_len, "result": val }));
+            }
+            let doc = solidcraft_io::read_design(&bytes).map_err(|e| e.to_string())?;
+            self.session = Session::new(doc);
+            self.rebuild_scene();
+            fit_camera(&self.session, &mut self.camera);
+            self.status = format!("Opened {name}");
+            Ok(json!({ "ok": true, "name": name, "byteLength": byte_len }))
         }
 
         fn handle_request(&mut self, method: &str, params: &Value) -> Result<Value, String> {
@@ -115,6 +192,11 @@ mod web {
                     "gpu": self.has_gpu,
                     "status": self.status,
                 })),
+                "__execute_batch" => {
+                    let results = self.session.run_script(params).map_err(|e| e.to_string())?;
+                    self.rebuild_scene();
+                    Ok(Value::Array(results))
+                }
                 "file.saveDesign" => {
                     let bytes = solidcraft_io::write_design(&self.session.doc).map_err(|e| e.to_string())?;
                     let name = format!("{}.sc", self.session.save_as_name());
@@ -320,7 +402,6 @@ mod web {
 
                         let caps: Vec<String> = solidcraft_engine::cmd::command_specs()
                             .into_iter()
-                            .take(64)
                             .map(|c| c.id.to_string())
                             .collect();
                         host_bridge::emit_ready(&caps);

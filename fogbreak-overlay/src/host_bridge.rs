@@ -4,12 +4,13 @@
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::mpsc::{Sender, TryRecvError, channel};
 
 use js_sys::{Array, Function, Object, Promise, Reflect, Uint8Array};
 use serde_json::{Value, json};
 use wasm_bindgen::JsCast as _;
+use wasm_bindgen::JsValue;
 use wasm_bindgen::closure::Closure;
-use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{JsFuture, future_to_promise};
 
 pub const ENGINE_ID: &str = "fogbreak-solid";
@@ -17,16 +18,27 @@ pub const HOST_KEY: &str = "fogbreakSolidHost";
 pub const CANVAS_ID: &str = "fogbreak_solid_canvas";
 pub const LOADING_ID: &str = "fogbreak_solid_loading";
 
+const EXPORT_FORMATS: [&str; 6] = ["step", "3mf", "stl", "obj", "glb", "iges"];
+
 pub enum HostCommand {
     Request {
         method: String,
         params: Value,
-        tx: std::sync::mpsc::Sender<Result<Value, String>>,
+        tx: Sender<Result<Value, String>>,
     },
     Screenshot {
         width: usize,
         height: usize,
-        tx: std::sync::mpsc::Sender<Result<Vec<u8>, String>>,
+        tx: Sender<Result<Vec<u8>, String>>,
+    },
+    Export {
+        format: String,
+        tx: Sender<Result<Vec<u8>, String>>,
+    },
+    Import {
+        name: String,
+        bytes: Vec<u8>,
+        tx: Sender<Result<Value, String>>,
     },
     OpenBytes {
         name: String,
@@ -199,7 +211,7 @@ pub fn install_rpc(queue: CommandQueue, ctx: egui::Context) {
         f.forget();
     }
 
-    {
+    for alias in ["commands", "listCommands"] {
         let f = Closure::<dyn Fn() -> Promise>::new(|| {
             future_to_promise(async {
                 let list: Vec<Value> = solidcraft_engine::cmd::command_specs()
@@ -209,7 +221,28 @@ pub fn install_rpc(queue: CommandQueue, ctx: egui::Context) {
                 Ok(to_js(&Value::Array(list)))
             })
         });
-        let _ = Reflect::set(&handle, &"commands".into(), f.as_ref().unchecked_ref());
+        let _ = Reflect::set(&handle, &JsValue::from_str(alias), f.as_ref().unchecked_ref());
+        f.forget();
+    }
+
+    {
+        let f = Closure::<dyn Fn(String) -> Promise>::new(|command: String| {
+            future_to_promise(async move {
+                let val = describe_command_json(&command);
+                Ok(to_js(&val))
+            })
+        });
+        let _ = Reflect::set(&handle, &"describeCommand".into(), f.as_ref().unchecked_ref());
+        f.forget();
+    }
+
+    {
+        let q = queue.clone();
+        let c = ctx.clone();
+        let f = Closure::<dyn Fn(JsValue) -> Promise>::new(move |steps: JsValue| {
+            dispatch_req(q.clone(), c.clone(), "__execute_batch".to_string(), parse_params(&steps))
+        });
+        let _ = Reflect::set(&handle, &"executeBatch".into(), f.as_ref().unchecked_ref());
         f.forget();
     }
 
@@ -285,7 +318,138 @@ pub fn install_rpc(queue: CommandQueue, ctx: egui::Context) {
         f.forget();
     }
 
+    install_native_io_object(&handle, &queue, &ctx);
+
     let _ = Reflect::set(&window, &JsValue::from_str(HOST_KEY), &handle);
+}
+
+fn describe_command_json(command: &str) -> Value {
+    let specs = solidcraft_engine::cmd::command_specs();
+    let spec = specs
+        .iter()
+        .copied()
+        .find(|c| c.id == command)
+        .or_else(|| specs.iter().copied().find(|c| c.id.eq_ignore_ascii_case(command)));
+    let Some(spec) = spec else {
+        return Value::Null;
+    };
+    let mut obj = json!({
+        "id": spec.id,
+        "label": spec.label,
+        "summary": spec.label,
+        "tab": spec.tab,
+        "panel": spec.panel,
+        "shortcut": spec.shortcut,
+        "params": spec.params,
+        "mutates": spec.undoable,
+        "undoable": spec.undoable,
+        "readsModel": spec.reads_model,
+    });
+    if let Some(map) = obj.as_object_mut() {
+        if let Some(schema) = spec.contract.and_then(|ct| serde_json::to_value(ct.input_schema()).ok()) {
+            map.insert("inputSchema".to_string(), schema);
+        }
+        if let Some(schema) = spec.output.and_then(|out_fn| serde_json::to_value(out_fn()).ok()) {
+            map.insert("outputSchema".to_string(), schema);
+        }
+    }
+    obj
+}
+
+fn install_native_io_object(handle: &Object, queue: &CommandQueue, ctx: &egui::Context) {
+    let io_obj = Object::new();
+
+    let formats_fn = Closure::<dyn Fn() -> Promise>::new(|| {
+        future_to_promise(async {
+            let arr: Vec<Value> = EXPORT_FORMATS.iter().map(|f| Value::String((*f).to_string())).collect();
+            Ok(to_js(&Value::Array(arr)))
+        })
+    });
+    let _ = Reflect::set(&io_obj, &"formats".into(), formats_fn.as_ref().unchecked_ref());
+    formats_fn.forget();
+
+    let exp_q = queue.clone();
+    let exp_c = ctx.clone();
+    let export_fn = Closure::<dyn Fn(String, JsValue) -> Promise>::new(move |format: String, _params: JsValue| {
+        let q = exp_q.clone();
+        let c = exp_c.clone();
+        future_to_promise(async move {
+            let (tx, rx) = channel();
+            q.push(HostCommand::Export { format, tx });
+            c.request_repaint();
+            loop {
+                match rx.try_recv() {
+                    Ok(Ok(bytes)) => return Ok(Uint8Array::from(bytes.as_slice()).into()),
+                    Ok(Err(e)) => return Err(JsValue::from_str(&e)),
+                    Err(TryRecvError::Empty) => sleep_ms(16).await,
+                    Err(TryRecvError::Disconnected) => return Err(JsValue::from_str("export request dropped")),
+                }
+            }
+        })
+    });
+    let _ = Reflect::set(&io_obj, &"export".into(), export_fn.as_ref().unchecked_ref());
+    export_fn.forget();
+
+    let imp_q = queue.clone();
+    let imp_c = ctx.clone();
+    let import_fn = Closure::<dyn Fn(JsValue) -> Promise>::new(move |detail: JsValue| {
+        let q = imp_q.clone();
+        let c = imp_c.clone();
+        let parsed = extract_import_detail(&detail);
+        future_to_promise(async move {
+            let (name, bytes) = parsed.map_err(|e| JsValue::from_str(&e))?;
+            let (tx, rx) = channel();
+            q.push(HostCommand::Import { name, bytes, tx });
+            c.request_repaint();
+            loop {
+                match rx.try_recv() {
+                    Ok(Ok(val)) => return Ok(to_js(&val)),
+                    Ok(Err(e)) => return Err(JsValue::from_str(&e)),
+                    Err(TryRecvError::Empty) => sleep_ms(16).await,
+                    Err(TryRecvError::Disconnected) => return Err(JsValue::from_str("import request dropped")),
+                }
+            }
+        })
+    });
+    let _ = Reflect::set(&io_obj, &"import".into(), import_fn.as_ref().unchecked_ref());
+    import_fn.forget();
+
+    let _ = Reflect::set(handle, &"io".into(), &io_obj);
+}
+
+fn infer_solid_ext(mime: Option<&str>) -> &'static str {
+    match mime.unwrap_or("").to_ascii_lowercase().as_str() {
+        "model/step" | "application/step" | "application/x-step" => "step",
+        "model/iges" | "application/iges" => "iges",
+        "model/3mf" | "application/vnd.ms-package.3dmanufacturing-3dmodel+xml" => "3mf",
+        "model/stl" | "application/sla" => "stl",
+        "model/obj" => "obj",
+        "model/gltf-binary" => "glb",
+        _ => "sc",
+    }
+}
+
+fn extract_import_detail(detail: &JsValue) -> Result<(String, Vec<u8>), String> {
+    let mime = Reflect::get(detail, &"mimeType".into())
+        .ok()
+        .and_then(|v| v.as_string());
+    let raw_name = Reflect::get(detail, &"name".into())
+        .ok()
+        .and_then(|v| v.as_string())
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    let name = match raw_name {
+        Some(n) if n.contains('.') => n,
+        Some(n) => format!("{n}.{}", infer_solid_ext(mime.as_deref())),
+        None => format!("part.{}", infer_solid_ext(mime.as_deref())),
+    };
+    let bytes_val = Reflect::get(detail, &"bytes".into())
+        .map_err(|_| "import requires a `bytes` Uint8Array".to_string())?;
+    let bytes = Uint8Array::new(&bytes_val).to_vec();
+    if bytes.is_empty() {
+        return Err("import requires non-empty bytes".to_string());
+    }
+    Ok((name, bytes))
 }
 
 fn dispatch_req(queue: CommandQueue, ctx: egui::Context, method: String, params: Value) -> Promise {
