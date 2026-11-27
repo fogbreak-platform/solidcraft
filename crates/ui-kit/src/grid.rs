@@ -1,8 +1,8 @@
 //! Shared editable dense data grid built atop [`Table`].
 use super::{
+    layout::{Text, text},
     table::{Column, Table, table_custom},
     table_cell_nav::{CellKey, cell_key, keep_tab_in_cell, land_in_cell, landing, landing_in_row},
-    text::{Text, text},
 };
 use egui::{Response, Ui};
 use solidcraft_theme::Tokens;
@@ -273,7 +273,7 @@ impl<'a> Grid<'a> {
                             let has_err = message.as_ref().is_some_and(|(_, err)| *err);
                             match &kind {
                                 CellKind::Custom | CellKind::ReadOnly => {
-                                    let resp = text(ui, &cell_text, if has_err { Text::Error } else { Text::Cell });
+                                    let resp = text(ui, &cell_text, if has_err { Text::Error(&cell_text) } else { Text::Cell });
                                     if let Some((tip, _)) = &message {
                                         resp.clone().on_hover_text(tip.as_ref());
                                     }
@@ -347,7 +347,7 @@ impl<'a> Grid<'a> {
                                         let (rect, click_resp) = ui.allocate_exact_size(ui.available_size(), egui::Sense::click());
                                         let text_rect = rect.shrink2(egui::vec2(Tokens::get().space_4, 0.0));
                                         ui.scope_builder(egui::UiBuilder::new().max_rect(text_rect), |ui| {
-                                            text(ui, shown_text, if has_err { Text::Error } else { Text::Cell });
+                                            text(ui, shown_text, if has_err { Text::Error(shown_text) } else { Text::Cell });
                                         });
                                         if let Some((tip, _)) = &message {
                                             click_resp.clone().on_hover_text(tip.as_ref());

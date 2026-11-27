@@ -488,6 +488,21 @@ impl<'a> MenuItem<'a> {
     }
 }
 
+/// Popup frame matching [`Menu::frame`].
+pub fn frame() -> egui::Frame {
+    Menu::frame()
+}
+
+/// Horizontal divider matching [`Menu::separator`].
+pub fn separator(ui: &mut Ui) {
+    Menu::separator(ui);
+}
+
+/// Section heading matching [`Menu::heading`].
+pub fn heading(ui: &mut Ui, label: &str) {
+    Menu::heading(ui, label);
+}
+
 /// A list menu's popup surface, [`LIST_W`] wide, around `add`.
 pub fn menu_frame<R>(ui: &mut Ui, add: impl FnOnce(&mut Ui) -> R) -> R {
     Menu::show(ui, LIST_W, add)

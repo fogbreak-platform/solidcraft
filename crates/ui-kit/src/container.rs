@@ -1135,11 +1135,6 @@ impl Container {
     }
 }
 
-/// Whether `layer` belongs to the background / canvas layer rather than floating UI.
-pub fn is_canvas(layer: egui::LayerId) -> bool {
-    layer.order == egui::Order::Background
-}
-
 #[cfg(test)]
 #[path = "container_tests.rs"]
 mod tests;

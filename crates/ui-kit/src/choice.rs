@@ -793,7 +793,7 @@ pub struct SwatchPicker<'a> {
 }
 
 /// Searchable visual swatch dropdown showing material/finish thumbnails beside titles.
-pub fn swatch_picker(ui: &mut Ui, id: impl egui::IdSalt, selected: &mut Option<usize>, picker: SwatchPicker<'_>) -> egui::Response {
+pub fn swatch_picker(ui: &mut Ui, id: impl egui::AsIdSalt, selected: &mut Option<usize>, picker: SwatchPicker<'_>) -> egui::Response {
     let t = Tokens::get();
     let current = selected.and_then(|i| picker.titles.get(i)).map_or(picker.choose, String::as_str);
     let base_id = ui.make_persistent_id(id);
