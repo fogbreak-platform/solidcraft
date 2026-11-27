@@ -511,7 +511,7 @@ theme_keys! {
         app_bar_separator, surface_accent, mesh_accent, form_accent, render_accent, on_accent, agent_ok, agent_busy, app_bar_hover_subtle,
         app_bar_hover_button, app_bar_hover_strong, app_bar_tab_active,
         form_ink, form_dim, form_primary, form_primary_fill, form_error, form_error_fill, form_success, form_success_fill, dialog_body, dialog_footer, dialog_rule, control_fill, control_border, dialog_label, selected_ink, selected_bg,
-        navigator_face, navigator_border, paper_white, paper_ink, paper_dark, paper_dark_ink, paper_blueprint, paper_blueprint_ink, paper_prussian_blue, paper_prussian_blue_ink,
+        navigator_face, navigator_border, navigator_hover, paper_white, paper_ink, paper_dark, paper_dark_ink, paper_blueprint, paper_blueprint_ink, paper_prussian_blue, paper_prussian_blue_ink,
     ],
     many: [continuity, logo, section_hatch, library_highlights],
     icons: [highlight, agent, marker_halo],

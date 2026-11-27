@@ -303,6 +303,16 @@ pub(super) fn layout(app: &mut SolveApp, ui: &mut egui::Ui) {
                     ui_kit::LayoutPreview {
                         compact: app.ui.layout == crate::ui_kit::LayoutMode::Docked,
                         labels: app.preferences.ribbon_labels,
+                        history: if app.preferences.history_in_browser {
+                            3
+                        } else if app.preferences.timeline_left {
+                            if app.preferences.timeline_under_browser { 2 } else { 1 }
+                        } else {
+                            0
+                        },
+                        translucent: solidcraft_theme::Tokens::get().panel.a() < 255
+                            || crate::theme::blur_intent(ui.ctx()).radius > 0.0,
+                        dialog_left: false,
                         history_in_browser: app.preferences.history_in_browser,
                     }
                 },

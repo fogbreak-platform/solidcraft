@@ -306,6 +306,7 @@ impl Tokens {
             ],
             navigator_face: Color32::from_rgb(235, 240, 244),
             navigator_border: Color32::from_rgb(198, 206, 214),
+            navigator_hover: Color32::from_rgb(190, 220, 252),
             paper_white: Color32::WHITE,
             paper_ink: Color32::from_rgb(17, 24, 33),
             paper_dark: Color32::from_rgb(43, 47, 54),
@@ -484,6 +485,7 @@ impl Tokens {
         t.form_success_fill = Color32::from_rgb(44, 74, 51);
         t.navigator_face = Color32::from_rgb(60, 67, 80);
         t.navigator_border = Color32::from_rgb(84, 92, 108);
+        t.navigator_hover = Color32::from_rgb(84, 114, 158);
         t
     }
 

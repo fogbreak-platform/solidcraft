@@ -1222,7 +1222,11 @@ pub(crate) fn play_labels(app: &SolveApp) -> crate::ui_kit::PlayLabels<'static> 
 fn bar(app: &SolveApp, floating: bool) -> history_bar::Bar<'static> {
     let t = Tokens::get();
     history_bar::Bar {
+        title: solidcraft_ui_text::tr("ui.history_title"),
         marker_tip: solidcraft_ui_text::tr("ui.history_marker_tip"),
+        play: app.preferences.history_play_button,
+        playing: app.timeline_playback.is_some(),
+        play_labels: play_labels(app),
         accent: crate::workspace::tab_accent(&t, &app.ui.tab),
         drag_accent: crate::workspace::tab_accent(&t, "SKETCH"),
         marker: 0,
@@ -1305,6 +1309,10 @@ fn timeline_strip(app: &mut SolveApp, ui: &mut egui::Ui, floating: bool, x: f32)
                     select_one(app, step);
                 }
                 crate::context_menu::open_for(app, at, crate::context_menu::Target::Timeline { feature: step });
+            }
+            history_bar::Action::Play => run_transport(app, crate::ui_kit::HistoryTransport::Play),
+            history_bar::Action::ControlsMenu { at } => {
+                crate::context_menu::open_for(app, at, crate::context_menu::Target::HistoryControls);
             }
             history_bar::Action::Seek(seek) => {
                 let target = match seek {
@@ -1438,7 +1446,7 @@ impl history_bar::Contents for BarSteps<'_> {
                 warning: res.is_some_and(has_warning),
                 ink: sketch_state.and_then(|state| state.ink(&t)),
                 tip: &tip,
-                handle: self.rows.handles.get(at),
+                handle: self.rows.handles.get(at).map(|v| &**v),
             });
             // Only the step to reveal takes the strip's ui: taking it makes the steps out of view
             // after it read egui's memory again.

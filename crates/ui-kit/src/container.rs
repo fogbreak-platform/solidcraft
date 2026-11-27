@@ -103,6 +103,10 @@ impl<'a> BackingPopup<'a> {
         self.0 = self.0.at_pointer_fixed();
         self
     }
+    pub fn at_position(mut self, position: egui::Pos2) -> Self {
+        self.0 = self.0.at_position(position);
+        self
+    }
     pub fn anchor(mut self, value: impl Into<egui::PopupAnchor>) -> Self {
         self.0 = self.0.anchor(value);
         self
