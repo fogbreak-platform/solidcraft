@@ -345,7 +345,11 @@ impl super::MenuItem<'_> {
             vec2(t.space_24 + t.space_2, t.space_24 + t.space_2),
         );
         painter.rect_filled(tile, CommandSearch::inner_radius(), if hot { t.accent_soft } else { t.dialog_footer });
-        icons::paint_icon(&painter, tile.shrink(t.space_6), self.icon, if self.enabled { 1.0 } else { 0.4 });
+        let opacity = if self.enabled { 1.0 } else { 0.4 };
+        match self.icon {
+            crate::Icon::Kit(name) => icons::paint_icon(&painter, tile.shrink(t.space_6), name, opacity),
+            other => other.paint(&painter, tile.shrink(t.space_6), opacity),
+        }
         let right = r.right() - t.space_8;
         let key_width = if self.shortcut.is_empty() {
             0.0
