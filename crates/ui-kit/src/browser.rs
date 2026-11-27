@@ -20,11 +20,12 @@ pub enum Zone {
     Into,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum How {
     Only,
     Toggle,
-    Range,
+    Range(Vec<NodeId>),
+    RangeAdd(Vec<NodeId>),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -178,7 +179,13 @@ pub struct BrowserState {
     pub active_drag: Option<Dragged>,
     last_click_id: Option<NodeId>,
     last_click_time: Option<f64>,
+    anchor: Option<NodeId>,
+    prev_selectable: Vec<NodeId>,
+    curr_selectable: Vec<NodeId>,
 }
+
+/// Cancel an active drag for `scope`, if any.
+pub fn cancel_drag(_ctx: &Context, _scope: u64) {}
 
 pub fn end_gestures(ctx: &Context, state: &mut BrowserState, source: Source) -> Vec<Event> {
     let mut events = Vec::new();
@@ -256,6 +263,7 @@ impl<'a> Browser<'a> {
             self.state.eye_drag_active = false;
             output.events.push(Event::EyeGesture(Gesture::End));
         }
+        self.state.prev_selectable = std::mem::take(&mut self.state.curr_selectable);
         let paint_rows = |ui: &mut Ui| {
             let mut rows = Rows {
                 ui,
@@ -371,10 +379,21 @@ impl Rows<'_> {
                     Selectable::Yes(_) => {
                         let mods = self.ui.input(|i| i.modifiers);
                         let how = if mods.shift {
-                            How::Range
+                            let ids = if let Some(anchor) = self.state.anchor
+                                && let Some(a_idx) = self.state.prev_selectable.iter().position(|x| *x == anchor)
+                                && let Some(b_idx) = self.state.prev_selectable.iter().position(|x| *x == node.id)
+                            {
+                                let (lo, hi) = if a_idx <= b_idx { (a_idx, b_idx) } else { (b_idx, a_idx) };
+                                self.state.prev_selectable[lo..=hi].to_vec()
+                            } else {
+                                vec![node.id]
+                            };
+                            if mods.command || mods.ctrl { How::RangeAdd(ids) } else { How::Range(ids) }
                         } else if mods.command || mods.ctrl {
+                            self.state.anchor = Some(node.id);
                             How::Toggle
                         } else {
+                            self.state.anchor = Some(node.id);
                             How::Only
                         };
                         events.push(Event::Select { id: node.id, how });
@@ -384,6 +403,9 @@ impl Rows<'_> {
                     }
                 }
             }
+        }
+        if matches!(node.select, Selectable::Yes(_)) {
+            self.state.curr_selectable.push(node.id);
         }
         let _ = slow_rename;
 

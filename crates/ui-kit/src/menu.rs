@@ -513,6 +513,25 @@ pub fn button(ui: &mut Ui, label: &str, icon: &str) -> Response {
     button_enabled(ui, label, icon, true)
 }
 
+/// Vertical scroll wrapper used by overflowing context menus.
+pub fn scroll_rows<R>(
+    ui: &mut Ui,
+    id: egui::Id,
+    max_height: f32,
+    content_height: f32,
+    add: impl FnOnce(&mut Ui) -> R,
+) -> R {
+    if content_height > max_height {
+        egui::ScrollArea::vertical()
+            .id_salt(id)
+            .max_height(max_height.max(30.0))
+            .show(ui, add)
+            .inner
+    } else {
+        add(ui)
+    }
+}
+
 /// [`button`], greyed out and inert when `enabled` is false.
 pub fn button_enabled(ui: &mut Ui, label: &str, icon: &str, enabled: bool) -> Response {
     let mut item = MenuItem::new(label, label, icon);

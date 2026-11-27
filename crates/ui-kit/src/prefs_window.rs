@@ -89,6 +89,10 @@ pub trait Host: Sized {
     fn apply(&mut self) -> Result<(), String> {
         Ok(())
     }
+    /// Confirm/commit pending inputs in the active page.
+    fn confirm(&mut self) -> Result<(), String> {
+        Ok(())
+    }
     /// A control is taking the keys (a shortcut being recorded): search leaves them and Esc does
     /// not close the window.
     fn keys_captured(&self) -> bool {

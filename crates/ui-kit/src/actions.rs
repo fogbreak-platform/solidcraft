@@ -137,7 +137,7 @@ pub fn mirrored_icon_button_at(ui: &mut Ui, rect: egui::Rect, icon: &str, label:
     icon_button_presentation(ui, rect, icon, label, None, false, true)
 }
 
-pub(super) fn icon_button_colored(ui: &mut Ui, rect: egui::Rect, icon: &str, label: &str, ink: Option<egui::Color32>) -> Response {
+pub fn icon_button_colored(ui: &mut Ui, rect: egui::Rect, icon: &str, label: &str, ink: Option<egui::Color32>) -> Response {
     icon_button_presentation(ui, rect, icon, label, ink, false, false)
 }
 
