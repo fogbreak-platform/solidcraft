@@ -11,7 +11,6 @@ use egui::{Ui, vec2};
 use solidcraft_theme::Tokens;
 
 /// Text segments retain mixed states and optional compact clipping instead of dropdown fallback.
-#[derive(Default)]
 pub struct Segments<'a> {
     /// Explicit focus requested by the owning form when a setting is opened for editing.
     pub focus: Option<usize>,
@@ -23,6 +22,7 @@ pub struct Segments<'a> {
     pub targets: &'a [&'a str],
     /// Optional leading icons retain the same text-segment geometry and accessibility.
     pub icons: &'a [&'a str],
+    pub glyphs: Option<&'a dyn Fn(&egui::Painter, egui::Rect, usize, egui::Color32)>,
     pub workspace_accent: bool,
     pub dense: bool,
     pub small: bool,
@@ -33,6 +33,28 @@ pub struct Segments<'a> {
     pub primary: bool,
     pub intrinsic: bool,
     pub proportional: bool,
+}
+
+impl Default for Segments<'_> {
+    fn default() -> Self {
+        Self {
+            focus: None,
+            enabled: &[],
+            disabled: &[],
+            targets: &[],
+            icons: &[],
+            glyphs: None,
+            workspace_accent: false,
+            dense: false,
+            small: false,
+            states: &[],
+            disabled_reasons: &[],
+            compact: false,
+            primary: false,
+            intrinsic: false,
+            proportional: false,
+        }
+    }
 }
 
 pub fn segmented(ui: &mut Ui, selected: &mut usize, options: &[&str], config: Segments<'_>) -> bool {
@@ -49,6 +71,7 @@ pub fn segmented(ui: &mut Ui, selected: &mut usize, options: &[&str], config: Se
         disabled,
         targets,
         icons,
+        glyphs,
         workspace_accent,
         dense,
         small,
@@ -166,32 +189,30 @@ pub fn segmented(ui: &mut Ui, selected: &mut usize, options: &[&str], config: Se
             egui::pos2(segment.center().x - (galley.size().x + icon_width) / 2.0 + icon_width, segment.top()),
             vec2(galley.size().x, segment.height()),
         );
-        if let Some(icon) = icons.get(index) {
-            let icon_rect = egui::Rect::from_center_size(
-                egui::pos2(text_rect.left() - t.space_6 - t.space_14 / 2.0, segment.center().y),
-                vec2(t.space_14, t.space_14),
-            );
-            crate::icons::paint_ink(ui.painter(), icon_rect, icon, if on && workspace_accent { accent.ink } else { t.form_ink });
+        let ink = if !segment_enabled {
+            t.form_dim
+        } else if on && primary {
+            t.on_accent
+        } else if on && workspace_accent {
+            accent.ink
+        } else if on {
+            t.selected_ink
+        } else {
+            t.form_ink
+        };
+        if let Some(paint_glyph) = glyphs {
+            paint_glyph(ui.painter(), segment.shrink(t.space_2), index, ink);
+        } else {
+            if let Some(icon) = icons.get(index) {
+                let icon_rect = egui::Rect::from_center_size(
+                    egui::pos2(text_rect.left() - t.space_6 - t.space_14 / 2.0, segment.center().y),
+                    vec2(t.space_14, t.space_14),
+                );
+                crate::icons::paint_ink(ui.painter(), icon_rect, icon, if on && workspace_accent { accent.ink } else { t.form_ink });
+            }
+            let text_rect = if compact { text_rect.intersect(segment.shrink2(vec2(t.space_4, 0.0))) } else { text_rect };
+            paint_text(ui, text_rect, text, font, ink, false);
         }
-        let text_rect = if compact { text_rect.intersect(segment.shrink2(vec2(t.space_4, 0.0))) } else { text_rect };
-        paint_text(
-            ui,
-            text_rect,
-            text,
-            font,
-            if !segment_enabled {
-                t.form_dim
-            } else if on && primary {
-                t.on_accent
-            } else if on && workspace_accent {
-                accent.ink
-            } else if on {
-                t.selected_ink
-            } else {
-                t.form_ink
-            },
-            false,
-        );
         t.button_bevel_with_radius(ui, &response, on, rounding);
         response.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, segment_enabled, on, *text));
         solidcraft_ui_registry::publish_target(&format!("dialog:{}:{option}", label(ui)), segment);

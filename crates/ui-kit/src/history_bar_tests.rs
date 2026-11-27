@@ -18,6 +18,7 @@ fn bar(steps: usize, marker: usize, play: bool) -> Bar<'static> {
         marker,
         steps,
         floating: false,
+        reorder: true,
         handles: HANDLES,
     }
 }
@@ -43,12 +44,13 @@ impl Contents for Steps {
                 slot = end;
                 continue;
             }
-            let tip = || format!("{label} tip");
+            let tip = || crate::StatusTip { head: format!("{label} tip"), ..Default::default() };
             let (state, error) = self.marks.get(slot).copied().unwrap_or_default();
             strip.step(&Step {
                 id: slot as u64 + 1,
                 slot,
                 label,
+                handle: None,
                 icon: "box",
                 icon_accent: None,
                 state,

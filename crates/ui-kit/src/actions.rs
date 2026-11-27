@@ -187,6 +187,12 @@ pub fn text_button(ui: &mut Ui, label: &str, enabled: bool) -> Response {
     response
 }
 
+pub struct FilterButtonOut<R> {
+    pub inner: Option<R>,
+    pub response: egui::Response,
+    pub badge: Option<egui::Rect>,
+}
+
 /// Filter icon button inside `rect` opening a popup menu with optional active count badge.
 pub fn filter_button_at<R>(
     ui: &mut Ui,
@@ -195,13 +201,16 @@ pub fn filter_button_at<R>(
     label: &str,
     active_count: usize,
     add: impl FnOnce(&mut Ui) -> R,
-) -> egui::InnerResponse<Option<R>> {
+) -> FilterButtonOut<R> {
     let t = Tokens::get();
     let resp = icon_button_at(ui, rect, "filter", label);
-    if active_count > 0 {
+    let badge = if active_count > 0 {
         let dot = egui::pos2(rect.right() - 4.0, rect.top() + 4.0);
         ui.painter().circle_filled(dot, 3.0, t.accent);
-    }
+        Some(egui::Rect::from_center_size(dot, vec2(6.0, 6.0)))
+    } else {
+        None
+    };
     let popup_id = ui.make_persistent_id(("filter_menu", id));
     if resp.clicked() {
         egui::Popup::toggle_id(ui.ctx(), popup_id);
@@ -211,8 +220,8 @@ pub fn filter_button_at<R>(
         .frame(crate::menu::frame())
         .show(|ui| add(ui));
     match shown {
-        Some(inner) => egui::InnerResponse::new(Some(inner.inner), inner.response),
-        None => egui::InnerResponse::new(None, resp),
+        Some(inner) => FilterButtonOut { inner: Some(inner.inner), response: inner.response, badge },
+        None => FilterButtonOut { inner: None, response: resp, badge },
     }
 }
 

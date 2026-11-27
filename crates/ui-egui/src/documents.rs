@@ -2813,7 +2813,7 @@ pub fn tabs(app: &mut SolveApp, ui: &mut egui::Ui, r: Rect, x0: f32, x1: f32) {
                     dirty: *dirty,
                     place,
                     security: *security,
-                    views,
+                    views: views.clone(),
                 })
                 .collect(),
             selected,

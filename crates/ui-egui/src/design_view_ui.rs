@@ -232,7 +232,7 @@ pub(crate) fn window_layout(app: &SolveApp) -> solidcraft_ui_kit::view_layout_me
         .map(|choice| LayoutWindow {
             id: choice.id,
             name: choice.name.clone(),
-            display: choice.display_label.clone(),
+            display: choice.display_label.clone().unwrap_or_default(),
             views: views
                 .iter()
                 .filter(|(owner, _)| *owner == choice.id)

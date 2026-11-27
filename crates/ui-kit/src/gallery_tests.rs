@@ -671,7 +671,7 @@ pub const ELEMENTS: &[Element] = &[
                 |ui, ()| {
                     layout_preview(
                         ui,
-                        LayoutPreview { compact: true, labels: false, history: 2, translucent: false, dialog_left: true },
+                        LayoutPreview { compact: true, labels: false, history: 2, translucent: false, dialog_left: true, history_in_browser: false },
                         "Where the panels go",
                     )
                 },
@@ -1494,7 +1494,7 @@ pub const ELEMENTS: &[Element] = &[
         slider(ui, &mut 12.0, 0.0..=100.0, Slider { show_value: false, integer: true, ..Default::default() });
     }),
     element!("canvas_value_field", |ui, s| {
-        canvas_value_field(ui, ui.scope_id().with("canvas_value"), &mut s.value, false);
+        canvas_value_field(ui, ui.scope_id().with("canvas_value"), &mut s.value, false, "");
     }),
     element!("placement_field", |ui, s| {
         placement_field(ui, ui.scope_id().with("placement"), &mut s.value, "Distance");

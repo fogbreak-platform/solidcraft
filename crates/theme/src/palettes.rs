@@ -297,6 +297,23 @@ impl Tokens {
             analysis: AnalysisColors::DEFAULT,
             icons: IconColors { highlight: Color32::WHITE, agent: Color32::from_rgb(168, 85, 247), marker_halo: Color32::from_black_alpha(150) },
             logo: [Color32::from_rgb(8, 127, 156), Color32::from_rgb(13, 148, 178), Color32::from_rgb(6, 98, 122)],
+            library_highlights: [
+                Color32::from_rgb(220, 76, 70),
+                Color32::from_rgb(230, 140, 48),
+                Color32::from_rgb(56, 168, 92),
+                Color32::from_rgb(8, 127, 156),
+                Color32::from_rgb(138, 92, 214),
+            ],
+            navigator_face: Color32::from_rgb(235, 240, 244),
+            navigator_border: Color32::from_rgb(198, 206, 214),
+            paper_white: Color32::WHITE,
+            paper_ink: Color32::from_rgb(17, 24, 33),
+            paper_dark: Color32::from_rgb(43, 47, 54),
+            paper_dark_ink: Color32::from_rgb(217, 221, 227),
+            paper_blueprint: Color32::from_rgb(30, 77, 139),
+            paper_blueprint_ink: Color32::WHITE,
+            paper_prussian_blue: Color32::from_rgb(11, 49, 94),
+            paper_prussian_blue_ink: Color32::WHITE,
         }
     }
     pub const fn dark() -> Tokens {
@@ -465,6 +482,8 @@ impl Tokens {
         t.form_error_fill = t.timeline_item_error;
         t.form_success = Color32::from_rgb(143, 219, 154);
         t.form_success_fill = Color32::from_rgb(44, 74, 51);
+        t.navigator_face = Color32::from_rgb(60, 67, 80);
+        t.navigator_border = Color32::from_rgb(84, 92, 108);
         t
     }
 

@@ -58,6 +58,12 @@ pub struct Layout {
     pub items: Vec<Placement>,
 }
 
+impl Layout {
+    pub fn to_value(&self) -> Value {
+        serde_json::to_value(self).unwrap_or(Value::Null)
+    }
+}
+
 const LOCKED_IDS: &[&str] = &["brand", "tabs", "file", "home", "report", "settings", "help"];
 
 pub fn can_remove(id: &str) -> bool {

@@ -24,7 +24,7 @@ pub struct Page<'a, A> {
     pub name: Label<'a>,
     /// Whether the page takes input (not while a file picker or a load is up).
     pub interactive: bool,
-    pub back: Back<'a, A>,
+    pub back: Option<Back<'a, A>>,
     pub rail: Vec<RailItem<'a, A>>,
     pub title: Label<'a>,
     pub hint: Label<'a>,
@@ -39,6 +39,7 @@ pub struct Back<'a, A> {
     pub template: Label<'a>,
     pub document: Label<'a>,
     pub shortcut: Label<'a>,
+    pub escape: bool,
     pub chosen: A,
 }
 
@@ -111,6 +112,7 @@ pub struct Recent<'a, A> {
     pub thumbnail: Option<(egui::TextureId, egui::Vec2)>,
     /// No picture could be made: a dimmed placeholder rather than a loading one.
     pub thumbnail_failed: bool,
+    pub security: Option<Label<'a>>,
     pub chosen: A,
     /// The row's context menu.
     pub menu: Vec<MenuEntry<'a, A>>,
@@ -196,12 +198,14 @@ pub fn show<A>(ui: &mut egui::Ui, page: Page<'_, A>) -> Option<A> {
     chosen
 }
 
-fn navigation<A>(ui: &mut egui::Ui, id: &str, back: Back<'_, A>, rail: Vec<RailItem<'_, A>>, chosen: &mut Option<A>) {
-    let back_id = format!("{id}:back");
-    let response = FileView::back_to(ui, &back_id, &back.template, &back.document, &back.shortcut);
-    publish(&back_id, &response);
-    if response.clicked() {
-        *chosen = Some(back.chosen);
+fn navigation<A>(ui: &mut egui::Ui, id: &str, back: Option<Back<'_, A>>, rail: Vec<RailItem<'_, A>>, chosen: &mut Option<A>) {
+    if let Some(back) = back {
+        let back_id = format!("{id}:back");
+        let response = FileView::back_to(ui, &back_id, &back.template, &back.document, &back.shortcut);
+        publish(&back_id, &response);
+        if response.clicked() || (back.escape && ui.input(|i| i.key_pressed(egui::Key::Escape))) {
+            *chosen = Some(back.chosen);
+        }
     }
     for item in rail {
         match item {
@@ -302,7 +306,7 @@ fn start_content<A>(ui: &mut egui::Ui, id: &str, start: Start<'_, A>, chosen: &m
                         title: &row.title,
                         path: &row.path,
                         when: &row.when,
-                        workspace: &row.kind,
+                        workspace: row.security.as_deref().unwrap_or(&row.kind),
                         thumbnail: row.thumbnail,
                         thumbnail_failed: row.thumbnail_failed,
                     },
@@ -407,7 +411,7 @@ mod tests {
             id: "start",
             name: "Start page".into(),
             interactive: true,
-            back: Back { template: "Back to {name}".into(), document: "Plate".into(), shortcut: "Esc".into(), chosen: Picked::Back },
+            back: Some(Back { template: "Back to {name}".into(), document: "Plate".into(), shortcut: "Esc".into(), escape: false, chosen: Picked::Back }),
             rail: vec![
                 RailItem::Entry(entry("start:home", true, true)),
                 RailItem::Entry(entry("start:save", false, false)),
@@ -434,6 +438,7 @@ mod tests {
                         kind: "Surface".into(),
                         thumbnail: None,
                         thumbnail_failed: false,
+                        security: None,
                         chosen: Picked::Recent(i),
                         menu: vec![
                             MenuEntry { label: "Remove from list".into(), icon: "delete", chosen: Picked::Forget(i) },

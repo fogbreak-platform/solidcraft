@@ -88,6 +88,13 @@ impl<'a> BackingPopup<'a> {
         self.0 = self.0.open(value);
         self
     }
+    pub fn open_bool(mut self, value: &'a mut bool) -> Self {
+        self.0 = self.0.open_bool(value);
+        self
+    }
+    pub fn get_id(&self) -> Id {
+        self.0.get_id()
+    }
     pub fn open_memory(mut self, value: impl Into<Option<egui::SetOpenCommand>>) -> Self {
         self.0 = self.0.open_memory(value);
         self
@@ -163,6 +170,8 @@ pub trait BackingTooltipExt: Sized {
     fn backing_on_hover_text(self, text: impl Into<WidgetText>) -> Self;
     fn backing_on_disabled_hover_text(self, text: impl Into<WidgetText>) -> Self;
     fn backing_on_hover_text_at_pointer(self, text: impl Into<WidgetText>) -> Self;
+    fn backing_on_hover_text_beside(self, panel: egui::Rect, text: impl Into<WidgetText>) -> Self;
+    fn backing_on_hover_status(self, tip: &crate::StatusTip) -> Self;
     fn backing_show_tooltip_ui(&self, body: impl FnOnce(&mut egui::Ui));
     fn backing_show_tooltip_text(&self, text: impl Into<WidgetText>);
 }
@@ -231,6 +240,25 @@ impl BackingTooltipExt for egui::Response {
         self.backing_on_hover_ui_at_pointer(|ui| {
             ui.set_max_width(ui.spacing().tooltip_width);
             ui.label(text);
+        })
+    }
+    fn backing_on_hover_text_beside(self, panel: egui::Rect, text: impl Into<WidgetText>) -> Self {
+        let text = text.into();
+        describe_for_accessibility(&self, text.text());
+        let mut tip = egui::Tooltip::for_enabled(&self);
+        tip.popup = tip.popup.anchor(egui::PopupAnchor::from(panel)).align(egui::RectAlign::RIGHT_START);
+        show_backing_tooltip(self.id, tip, |ui| {
+            ui.set_max_width(ui.spacing().tooltip_width);
+            ui.label(text);
+        });
+        self
+    }
+    fn backing_on_hover_status(self, tip: &crate::StatusTip) -> Self {
+        let plain = tip.plain();
+        describe_for_accessibility(&self, &plain);
+        self.backing_on_hover_ui(|ui| {
+            ui.set_max_width(ui.spacing().tooltip_width);
+            tip.show(ui);
         })
     }
     fn backing_show_tooltip_ui(&self, body: impl FnOnce(&mut egui::Ui)) {

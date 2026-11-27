@@ -308,7 +308,7 @@ mod tests {
     fn live_layout_preview_follows_each_choice_in_both_themes() {
         use crate::LayoutPreview;
         let previous = solidcraft_theme::is_dark();
-        let baseline = LayoutPreview { compact: false, labels: true, history: 0, translucent: false, dialog_left: false };
+        let baseline = LayoutPreview { compact: false, labels: true, history: 0, translucent: false, dialog_left: false, history_in_browser: false };
         for dark in [false, true] {
             solidcraft_theme::set_dark(dark);
             let draw = |state| {
@@ -332,7 +332,7 @@ mod tests {
             ] {
                 assert_ne!(original, draw(state), "each actual choice changes the schematic");
             }
-            let _ = draw(LayoutPreview { compact: false, labels: false, history: 2, translucent: true, dialog_left: true });
+            let _ = draw(LayoutPreview { compact: false, labels: false, history: 2, translucent: true, dialog_left: true, history_in_browser: false });
             let browser = solidcraft_ui_registry::rect_of("prefs:layout_preview:browser").unwrap();
             let history = solidcraft_ui_registry::rect_of("prefs:layout_preview:history").unwrap();
             let dialog = solidcraft_ui_registry::rect_of("prefs:layout_preview:dialog").unwrap();

@@ -891,7 +891,7 @@ fn apply_grid(app: &mut SolveApp, ctx: &egui::Context, d: &mut ParamsDialog, row
         match edit.row() {
             ui_kit::RowRef::New(n) => {
                 if let Some(slot) = [NAME, UNIT, EXPRESSION, COMMENT].iter().position(|c| *c == edit.col())
-                    && let Some(cell) = new_rows.entry(*n).or_default().get_mut(slot)
+                    && let Some(cell) = new_rows.entry(n).or_default().get_mut(slot)
                 {
                     *cell = text.to_owned();
                 }

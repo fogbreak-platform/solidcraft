@@ -485,7 +485,7 @@ pub fn panel_tab(
 /// Paint-only panel tab chrome for drag overlays and non-interactive previews.
 #[allow(clippy::too_many_arguments)]
 pub fn paint_panel_tab(
-    ui: &mut egui::Ui,
+    ui: &egui::Ui,
     bounds: egui::Rect,
     title: &str,
     selected: bool,

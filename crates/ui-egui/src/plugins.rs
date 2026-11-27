@@ -438,10 +438,12 @@ pub(crate) fn is_wasm_builtin_command(id: &str) -> bool {
 
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 pub(crate) fn resolve_cloud_call(id: &str, params: &serde_json::Value) -> Option<(String, String, serde_json::Value)> {
-    let normalize_id = |raw: &str| match raw {
-        "vase_maker" | "vase-maker" => "solidcraft-vasemaker",
-        other => other,
-    };
+    fn normalize_id(raw: &str) -> &str {
+        match raw {
+            "vase_maker" | "vase-maker" => "solidcraft-vasemaker",
+            other => other,
+        }
+    }
     let builtins = wasm_builtin_plugins();
     if id.eq_ignore_ascii_case("plugin.run") {
         let plugin_id = params.get("plugin").or_else(|| params.get("id")).and_then(serde_json::Value::as_str).map(normalize_id)?;

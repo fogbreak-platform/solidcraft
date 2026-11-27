@@ -165,6 +165,7 @@ fn button(id: &'static str, enabled: bool) -> Button<'static> {
         pressed: false,
         exit: false,
         split: None,
+        planned: false,
         app_paints: false,
         covers: &[],
     }

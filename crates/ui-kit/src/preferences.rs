@@ -853,6 +853,7 @@ pub struct LayoutPreview {
     pub history: usize,
     pub translucent: bool,
     pub dialog_left: bool,
+    pub history_in_browser: bool,
 }
 
 /// One live shell specimen follows workspace, toolbar, panel and dialog placement choices;

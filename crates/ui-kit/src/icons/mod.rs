@@ -42,7 +42,7 @@ pub fn add(name: &str, src: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub fn window_icon(here: bool) -> &'static str {
+pub const fn window_icon(here: bool) -> &'static str {
     if here { "window" } else { "new" }
 }
 

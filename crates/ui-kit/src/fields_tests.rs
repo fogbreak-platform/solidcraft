@@ -615,7 +615,7 @@ fn canvas_value_fields_grow_with_an_expression_up_to_three_times_their_width() {
                     ui.horizontal(|ui| {
                         let id = ui.scope_id().with(case);
                         rect = match case {
-                            "canvas" => canvas_value_field(ui, id, &mut value, false).rect,
+                            "canvas" => canvas_value_field(ui, id, &mut value, false, "").rect,
                             _ => placement_field(ui, id, &mut value, "").rect,
                         };
                     });
@@ -847,7 +847,7 @@ fn a_right_click_on_every_kind_of_text_field_opens_its_menu() {
                 "expression" | "plain" => super::editor(ui, value, "", case == "expression").2.rect,
                 "cell" => cell_editor(ui, id, value, "", false).rect,
                 "placement" => placement_field(ui, id, value, "").rect,
-                "canvas" => canvas_value_field(ui, id, value, false).rect,
+                "canvas" => canvas_value_field(ui, id, value, false, "").rect,
                 "password" => password_field(ui, id, value, "").rect,
                 "multiline" => multiline_text_field(ui, "Text", id, value).rect,
                 "area" => text_area(ui, "Text", id, value, 3, 100).rect,
@@ -999,7 +999,7 @@ fn a_right_click_on_a_value_box_over_the_canvas_does_not_reach_the_canvas() {
         let ctx = ui.ctx().clone();
         let area = Container::new(&ctx, Surface::Canvas).area(egui::Id::unique("canvas_box_area"));
         area.fixed_pos(egui::pos2(60.0, 60.0)).order(egui::Order::Foreground).show(&ctx, |ui| {
-            field.set(canvas_value_field(ui, id, &mut value.borrow_mut(), false).rect);
+            field.set(canvas_value_field(ui, id, &mut value.borrow_mut(), false, "").rect);
         });
     };
     menu_frame(&ctx, vec![], &mut draw);

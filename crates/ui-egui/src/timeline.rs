@@ -1064,7 +1064,8 @@ pub(crate) fn edit_holes_item(app: &mut SolveApp, ui: &mut egui::Ui, folder: u64
 }
 
 /// Where the bottom History strip publishes its marker and feature chips.
-const BAR_HANDLES: history_bar::Handles<'static> = history_bar::Handles { marker: "history:marker", step: "timeline:" };
+const BAR_HANDLES: history_bar::Handles<'static> =
+    history_bar::Handles { grip: "history:grip", marker: "history:marker", step: "timeline:", controls: "history:control:" };
 
 /// A feature as the bar draws it: id, name, icon, suppressed, type name, kind.
 type BarFeature = (u64, String, &'static str, bool, &'static str, TimelineKind);
@@ -1305,9 +1306,17 @@ fn timeline_strip(app: &mut SolveApp, ui: &mut egui::Ui, floating: bool, x: f32)
                 }
                 crate::context_menu::open_for(app, at, crate::context_menu::Target::Timeline { feature: step });
             }
-            history_bar::Action::Seek { slot, before } => {
-                let slot = position(slot, before);
-                let _ = app.run_heavy("timeline.roll_to", if slot >= n { json!({}) } else { json!({ "position": slot }) });
+            history_bar::Action::Seek(seek) => {
+                let target = match seek {
+                    history_bar::Seek::First => Some(0),
+                    history_bar::Seek::Back => marker.checked_sub(1),
+                    history_bar::Seek::Forward => (marker < n).then_some(marker + 1),
+                    history_bar::Seek::Last => Some(n),
+                    history_bar::Seek::Slot { slot, before } => Some(position(slot, before)),
+                };
+                if let Some(slot) = target {
+                    let _ = app.run_heavy("timeline.roll_to", if slot >= n { json!({}) } else { json!({ "position": slot }) });
+                }
             }
             // Crossing the marker rolls the feature back or forward, in the same step.
             history_bar::Action::Reorder { step, slot, before } => {

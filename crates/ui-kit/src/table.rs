@@ -12,13 +12,20 @@ pub struct Column<'a> {
     min_content_width: f32,
     icon_only: bool,
     flexible: bool,
+    pub frozen: bool,
     /// A width the user dragged the column to; it replaces the automatic width and stops sharing.
     manual: Option<f32>,
 }
 
 impl<'a> Column<'a> {
     pub fn new(label: &'a str, width: f32) -> Self {
-        Self { label, width, min_content_width: 0.0, icon_only: false, flexible: false, manual: None }
+        Self { label, width, min_content_width: 0.0, icon_only: false, flexible: false, frozen: false, manual: None }
+    }
+
+    /// Prevent the column from wrapping or shrinking below header width.
+    pub fn frozen(mut self) -> Self {
+        self.frozen = true;
+        self
     }
 
     /// Hold the column at a width the user chose by dragging its header divider.

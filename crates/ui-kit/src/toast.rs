@@ -10,6 +10,7 @@ pub const WIDTH: f32 = 340.0;
 pub enum Action {
     Primary,
     Secondary,
+    Dismiss,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -28,9 +29,10 @@ pub enum Place {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Extras<'a> {
     pub close: Option<&'a str>,
-    pub countdown: Option<(f64, f64)>,
+    pub countdown: Option<(f32, f64)>,
     pub tips: &'a [&'a str],
     pub card_handle: Option<&'a str>,
+    pub card_hint: Option<&'a str>,
 }
 
 #[derive(Clone, Debug)]
@@ -40,6 +42,7 @@ pub struct Shown {
     pub buttons: Vec<Rect>,
     pub close: Option<Rect>,
     pub closed: bool,
+    pub card_clicked: bool,
 }
 
 impl Default for Shown {
@@ -50,6 +53,7 @@ impl Default for Shown {
             buttons: Vec::new(),
             close: None,
             closed: false,
+            card_clicked: false,
         }
     }
 }
@@ -138,8 +142,8 @@ pub fn show(
     if extras.close.is_some() {
         let cr = Rect::from_center_size(pos2(rect.right() - pad - 8.0, rect.top() + pad + 8.0), vec2(18.0, 18.0));
         close_rect = Some(cr);
-        if let Some((rem, total)) = extras.countdown {
-            countdown_arc(p, cr.center(), 8.0, countdown_left(0.0, total - rem, total), t.accent);
+        if let Some((rem, _total)) = extras.countdown {
+            countdown_arc(p, cr.center(), 8.0, rem.clamp(0.0, 1.0), t.accent);
         }
         p.text(cr.center(), Align2::CENTER_CENTER, "×", FontId::proportional(t.font_label), t.text_dim);
         let resp = ui.interact(cr, ui.scope_id().with(("toast_close", extras.close)), Sense::click());
@@ -159,7 +163,7 @@ pub fn show(
             let br = Rect::from_min_size(pos2(bx, by), vec2(bw, 22.0));
             let (fill, ink, stroke) = match kind {
                 Action::Primary => (t.accent, t.on_accent, Stroke::NONE),
-                Action::Secondary => (t.control_fill, t.text, Stroke::new(1.0, t.border)),
+                Action::Secondary | Action::Dismiss => (t.control_fill, t.text, Stroke::new(1.0, t.border)),
             };
             p.rect(br, t.radius_sm, fill, stroke, StrokeKind::Inside);
             p.galley(pos2(br.center().x - bg.size().x * 0.5, br.center().y - bg.size().y * 0.5), bg, ink);
@@ -175,5 +179,19 @@ pub fn show(
         }
     }
 
-    Some(Shown { rect, clicked, buttons, close: close_rect, closed })
+    let mut card_clicked = false;
+    if extras.card_handle.is_some() || extras.card_hint.is_some() {
+        let card_resp = ui.interact(rect, ui.scope_id().with("toast_card"), Sense::click());
+        if let Some(hint) = extras.card_hint.filter(|s| !s.is_empty()) {
+            let _ = card_resp.clone().on_hover_text(hint);
+        }
+        if let Some(handle) = extras.card_handle {
+            solidcraft_ui_registry::publish_rect(handle, rect);
+        }
+        if card_resp.clicked() && clicked.is_none() && !closed {
+            card_clicked = true;
+        }
+    }
+
+    Some(Shown { rect, clicked, buttons, close: close_rect, closed, card_clicked })
 }

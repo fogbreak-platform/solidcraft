@@ -1254,6 +1254,17 @@ pub struct Tokens {
     /// The SolidCraft mark on the application bar: light, mid and dark faces (the gaps between
     /// them show the bar).
     pub logo: [Color32; 3],
+    pub library_highlights: [Color32; 5],
+    pub navigator_face: Color32,
+    pub navigator_border: Color32,
+    pub paper_white: Color32,
+    pub paper_ink: Color32,
+    pub paper_dark: Color32,
+    pub paper_dark_ink: Color32,
+    pub paper_blueprint: Color32,
+    pub paper_blueprint_ink: Color32,
+    pub paper_prussian_blue: Color32,
+    pub paper_prussian_blue_ink: Color32,
 }
 
 impl Tokens {
@@ -1463,6 +1474,8 @@ impl Tokens {
             cube_border: view.cube_border,
             cube_text: view.cube_text,
             cube_hover: view.cube_hover,
+            navigator_face: view.navigator_face,
+            navigator_border: view.navigator_border,
             viewport_top: view.viewport_top,
             viewport_bottom: view.viewport_bottom,
             grid: view.grid,
@@ -1542,6 +1555,22 @@ impl Tokens {
             return self;
         }
         let mut t = self;
+        t.cube_face = t.cube_face.lerp_to_gamma(t.viewport_top, 0.55);
+        t.cube_border = t.cube_border.lerp_to_gamma(t.viewport_top, 0.55);
+        t.cube_text = t.cube_text.lerp_to_gamma(t.viewport_top, 0.55);
+        t.axis_x = t.axis_x.lerp_to_gamma(t.viewport_top, 0.55);
+        t.axis_y = t.axis_y.lerp_to_gamma(t.viewport_top, 0.55);
+        t.axis_z = t.axis_z.lerp_to_gamma(t.viewport_top, 0.55);
+        t
+    }
+
+    pub fn navigator(self, active: bool) -> Tokens {
+        if active {
+            return self;
+        }
+        let mut t = self;
+        t.navigator_face = t.navigator_face.lerp_to_gamma(t.viewport_top, 0.55);
+        t.navigator_border = t.navigator_border.lerp_to_gamma(t.viewport_top, 0.55);
         t.cube_face = t.cube_face.lerp_to_gamma(t.viewport_top, 0.55);
         t.cube_border = t.cube_border.lerp_to_gamma(t.viewport_top, 0.55);
         t.cube_text = t.cube_text.lerp_to_gamma(t.viewport_top, 0.55);

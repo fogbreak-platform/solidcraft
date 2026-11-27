@@ -43,6 +43,13 @@ impl StatusTip {
         }
         lines.join("\n")
     }
+
+    pub fn show(&self, ui: &mut egui::Ui) {
+        let text = self.plain();
+        if !text.is_empty() {
+            ui.label(text);
+        }
+    }
 }
 
 /// Card identity, status dot/text and progress meter; use for solver/selection state.

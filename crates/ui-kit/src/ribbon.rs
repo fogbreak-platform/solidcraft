@@ -445,6 +445,7 @@ pub struct Button<'a> {
     pub exit: bool,
     /// A menu half under the button (its variants), with its key, title and accessible name.
     pub split: Option<Split<'a>>,
+    pub planned: bool,
     /// The app paints its background and label itself, after the row (`Drawn::background`).
     pub app_paints: bool,
     /// The other commands it stands for (a split button's variants), in the search's eyes.
@@ -1255,20 +1256,21 @@ pub fn section_footer(ui: &mut egui::Ui, message: &str) {
     ui.add_space(4.0);
 }
 
-/// How wide a menu's rows are for these (label, shortcut) pairs: the widest, at least 200.
-pub fn menu_width<'a>(ui: &egui::Ui, entries: impl IntoIterator<Item = (&'a str, &'a str)>) -> f32 {
+/// How wide a menu's rows are for these `(label, shortcut, icon, checkable)` tuples: the widest, at least 200.
+pub fn menu_width<'a>(ui: &egui::Ui, entries: impl IntoIterator<Item = (&'a str, &'a str, &'a str, bool)>) -> f32 {
     let t = Tokens::get();
     let font = FontId::proportional(t.font_button);
     entries
         .into_iter()
-        .map(|(label, shortcut)| {
+        .map(|(label, shortcut, icon, checkable)| {
             let label = ui.painter().layout_no_wrap(label.to_string(), font.clone(), t.text).size().x;
             let key = if shortcut.is_empty() {
                 0.0
             } else {
                 ui.painter().layout_no_wrap(shortcut.to_string(), FontId::monospace(t.font_button), t.text).size().x + 24.0
             };
-            6.0 + 20.0 + 8.0 + label + key + 30.0
+            let lead = if !icon.is_empty() || checkable { 20.0 + 8.0 } else { 0.0 };
+            6.0 + lead + label + key + 30.0
         })
         .fold(200.0, f32::max)
 }

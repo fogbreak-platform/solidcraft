@@ -70,6 +70,8 @@ pub struct Row<'a> {
     pub subtitle: &'a str,
     pub actions: &'a [TreeAction<'a>],
     pub radio_hint: &'a str,
+    pub emphasis: Option<std::ops::Range<usize>>,
+    pub handle: Option<&'a str>,
 }
 
 /// How a row relates to what the selection and the 3D view's pointer light.

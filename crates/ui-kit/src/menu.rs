@@ -365,7 +365,7 @@ impl Menu {
 pub struct MenuItem<'a> {
     pub id: &'a str,
     pub label: &'a str,
-    pub icon: &'a str,
+    pub icon: crate::Icon<'a>,
     pub shortcut: &'a str,
     pub enabled: bool,
     pub highlighted: bool,
@@ -376,8 +376,8 @@ pub struct MenuItem<'a> {
 }
 
 impl<'a> MenuItem<'a> {
-    pub fn new(id: &'a str, label: &'a str, icon: &'a str) -> Self {
-        Self { id, label, icon, shortcut: "", enabled: true, highlighted: false, checked: None, swatch: None, danger: false, submenu: false }
+    pub fn new(id: &'a str, label: &'a str, icon: impl Into<crate::Icon<'a>>) -> Self {
+        Self { id, label, icon: icon.into(), shortcut: "", enabled: true, highlighted: false, checked: None, swatch: None, danger: false, submenu: false }
     }
 
     /// The row for a menu entry, `lit` when it is chosen with the keys or its flyout is open. A
@@ -386,7 +386,7 @@ impl<'a> MenuItem<'a> {
         Self {
             id: &item.id,
             label: &item.label,
-            icon: &item.icon,
+            icon: crate::Icon::Kit(&item.icon),
             shortcut: if item.shortcut == "current" { "" } else { &item.shortcut },
             enabled: item.enabled,
             highlighted: lit,
@@ -450,13 +450,19 @@ impl<'a> MenuItem<'a> {
             }
         } else if let Some(color) = self.swatch {
             painter.rect(icon, t.radius_sm, color, t.control_border_stroke(t.control_border), egui::StrokeKind::Inside);
-        } else if !self.icon.is_empty() {
-            if self.danger {
-                icons::paint_danger(&painter, icon, self.icon, 1.0);
-            } else if hot {
-                icons::paint_ink(&painter, icon, self.icon, dim);
-            } else {
-                icons::paint_icon(&painter, icon, self.icon, 1.0);
+        } else {
+            match self.icon {
+                crate::Icon::Kit(name) if name.is_empty() => {}
+                crate::Icon::Kit(name) => {
+                    if self.danger {
+                        icons::paint_danger(&painter, icon, name, 1.0);
+                    } else if hot {
+                        icons::paint_ink(&painter, icon, name, dim);
+                    } else {
+                        icons::paint_icon(&painter, icon, name, 1.0);
+                    }
+                }
+                other => other.paint(&painter, icon, 1.0),
             }
         }
         let label = solidcraft_ui_text::tr_label(self.label);

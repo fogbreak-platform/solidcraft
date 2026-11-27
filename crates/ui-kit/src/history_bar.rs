@@ -47,6 +47,7 @@ pub struct Bar<'a> {
     pub steps: usize,
     /// The floating card, which also dots the last step before the marker.
     pub floating: bool,
+    pub reorder: bool,
     pub handles: Handles<'a>,
 }
 
@@ -56,6 +57,7 @@ pub struct Step<'a> {
     /// Its slot: its place among the steps the bar shows.
     pub slot: usize,
     pub label: &'a str,
+    pub handle: Option<&'a str>,
     /// A kit icon name.
     pub icon: &'a str,
     /// The icon's accent, an icon palette name (`None`: the artwork's own colours).
@@ -66,7 +68,7 @@ pub struct Step<'a> {
     /// Draw the icon in this one colour instead of its artwork.
     pub ink: Option<egui::Color32>,
     /// The hover text, written only while it shows.
-    pub tip: &'a dyn Fn() -> String,
+    pub tip: &'a dyn Fn() -> crate::StatusTip,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -394,7 +396,7 @@ impl Strip<'_, '_> {
         self.xs.push(self.x);
         let br = Rect::from_min_size(pos2(self.x, self.rect.top() + 6.0), vec2(28.0, 28.0));
         self.x += 32.0;
-        solidcraft_ui_registry::publish_handle(&format!("{}{}", self.bar.handles.step, step.label), br.center());
+        solidcraft_ui_registry::publish_handle(step.handle.unwrap_or(&format!("{}{}", self.bar.handles.step, step.label)), br.center());
         let ui = &mut *self.ui;
         let chip_id = ui.scope_id().with(("feat", step.id));
         let dragged = self.drag == Some(Drag::Step(step.id));
@@ -428,7 +430,7 @@ impl Strip<'_, '_> {
         }
         let resp = resp.backing_on_hover_ui(|ui| {
             ui.set_max_width(ui.spacing().tooltip_width);
-            ui.add(egui::Label::new((step.tip)()));
+            (step.tip)().show(ui);
         });
         if resp.clicked() {
             self.actions.push(Action::Select { step: step.id, modifiers: ui.input(|i| i.modifiers) });

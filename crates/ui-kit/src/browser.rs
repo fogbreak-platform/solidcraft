@@ -165,6 +165,7 @@ pub struct Output {
     pub drawn: Vec<DrawnRow>,
     pub pointer_owned: bool,
     pub events: Vec<Event>,
+    pub content_height: f32,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -182,6 +183,13 @@ pub struct BrowserState {
     anchor: Option<NodeId>,
     prev_selectable: Vec<NodeId>,
     curr_selectable: Vec<NodeId>,
+    focused: bool,
+}
+
+impl BrowserState {
+    pub fn focused(&self) -> bool {
+        self.focused
+    }
 }
 
 /// Cancel an active drag for `scope`, if any.
@@ -264,7 +272,9 @@ impl<'a> Browser<'a> {
             output.events.push(Event::EyeGesture(Gesture::End));
         }
         self.state.prev_selectable = std::mem::take(&mut self.state.curr_selectable);
+        self.state.focused = false;
         let paint_rows = |ui: &mut Ui| {
+            let top = ui.cursor().top();
             let mut rows = Rows {
                 ui,
                 state: self.state,
@@ -274,6 +284,8 @@ impl<'a> Browser<'a> {
                 events_per_row: self.events_per_row,
             };
             draw(&mut rows);
+            let bottom = ui.min_rect().bottom();
+            output.content_height = (bottom - top).max(0.0);
         };
         if self.scroll {
             egui::ScrollArea::vertical()
@@ -302,6 +314,19 @@ pub struct Rows<'a> {
 impl Rows<'_> {
     pub fn ui(&mut self) -> &mut Ui {
         self.ui
+    }
+
+    pub fn next_visible(&self) -> bool {
+        let cursor = self.ui.cursor();
+        let h = solidcraft_theme::Tokens::get().control_height.max(1.0);
+        let probe = egui::Rect::from_min_size(cursor.min, vec2(cursor.width().max(1.0), h));
+        self.ui.is_visible() && self.ui.clip_rect().intersects(probe)
+    }
+
+    pub fn pass(&mut self, id: NodeId, select: Selectable) {
+        if matches!(select, Selectable::Yes(_)) {
+            self.state.curr_selectable.push(id);
+        }
     }
 
     pub fn skip(&mut self, _id: NodeId, _select: Selectable) {}
