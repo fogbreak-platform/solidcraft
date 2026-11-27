@@ -94,7 +94,7 @@ impl SearchBoxEditor {
         let edit = egui::TextEdit::singleline(value)
             .hint_text(hint)
             .char_limit(max_chars)
-            .frame(false)
+            .frame(egui::Frame::NONE)
             .font(FontId::proportional(t.font_body))
             .desired_width(avail);
         let _ = start;

@@ -206,10 +206,14 @@ pub fn filter_button_at<R>(
     if resp.clicked() {
         egui::Popup::toggle_id(ui.ctx(), popup_id);
     }
-    egui::Popup::menu(&resp)
+    let shown = egui::Popup::menu(&resp)
         .id(popup_id)
         .frame(crate::menu::frame())
-        .show(|ui| add(ui))
+        .show(|ui| add(ui));
+    match shown {
+        Some(inner) => egui::InnerResponse::new(Some(inner.inner), inner.response),
+        None => egui::InnerResponse::new(None, resp),
+    }
 }
 
 /// Esc cancels; unowned Enter submits only when valid. Tokens: `none`.

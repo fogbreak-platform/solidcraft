@@ -231,7 +231,6 @@ pub fn release_stale_input(ctx: &egui::Context, raw: &mut egui::RawInput) {
     }
     let pos = ctx.input(|i| i.pointer.interact_pos().or(i.pointer.latest_pos())).unwrap_or_default();
     let modifiers = egui::Modifiers::NONE;
-    raw.modifiers = modifiers;
     let mut releases = vec![egui::Event::ModifiersChanged(modifiers)];
     for button in [
         PointerButton::Primary,

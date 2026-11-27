@@ -256,7 +256,7 @@ impl<'a> Browser<'a> {
             self.state.eye_drag_active = false;
             output.events.push(Event::EyeGesture(Gesture::End));
         }
-        let mut paint_rows = |ui: &mut Ui| {
+        let paint_rows = |ui: &mut Ui| {
             let mut rows = Rows {
                 ui,
                 state: self.state,
@@ -308,7 +308,8 @@ impl Rows<'_> {
         let was_eye = node.row.eye;
         let was_fold = node.row.fold;
         let label = node.row.label.to_owned();
-        let resp = crate::tree_row(self.ui, &node.row);
+        let row_id = self.ui.make_persistent_id(("browser_row", self.source.scope, self.source.presentation, node.id));
+        let resp = crate::tree_row(self.ui, row_id, &node.row);
         let mut events = Vec::new();
 
         if let Some(rect) = resp.rect {
@@ -386,7 +387,8 @@ impl Rows<'_> {
         }
         let _ = slow_rename;
 
-        if resp.drag_started && node.drag.is_some() && self.state.active_drag.is_none() {
+        let drag_started = resp.resp.as_ref().is_some_and(egui::Response::drag_started);
+        if drag_started && node.drag.is_some() && self.state.active_drag.is_none() {
             self.state.active_drag = Some(Dragged { source: self.source, ids: vec![node.id], data: None });
         }
         if let (Some(drag), Some(rect)) = (&self.state.active_drag, resp.rect)
@@ -413,14 +415,19 @@ impl Rows<'_> {
         if !self.events_per_row {
             self.output.events.extend(events.iter().cloned());
         }
+        let label_rect = resp
+            .rect
+            .zip(resp.label_left)
+            .map(|(r, left)| Rect::from_min_max(egui::pos2(left.min(r.right()), r.top()), r.right_bottom()));
+        let widget = resp.resp.as_ref().map(|r| r.id);
         RowOut {
             rect: resp.rect,
-            label_rect: resp.label_rect,
-            widget: resp.widget,
+            label_rect,
+            widget,
             hovered: resp.hovered,
-            response: resp.response,
+            response: resp.resp,
             on_control: resp.on_control,
-            drag_started: resp.drag_started,
+            drag_started,
             fold_at: resp.fold_at,
             eye_at: resp.eye_at,
             eye_rect: resp.eye_rect,

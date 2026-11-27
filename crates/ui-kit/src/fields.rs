@@ -30,6 +30,10 @@ pub trait Expressions: Send + Sync {
     /// Whether `unit`, the text after a literal's number as written (" mm", "in", ""), is a unit
     /// of the language. An empty unit is a unit-less number.
     fn is_unit(&self, unit: &str) -> bool;
+    /// Whether `unit` is a strict prefix of a longer valid unit name.
+    fn unit_is_prefix(&self, _unit: &str) -> bool {
+        false
+    }
     /// Offer completion and stepping for this frame under the editor `response` over `text`.
     /// Returns true when either changed the text; that frame's Enter then accepts the change
     /// instead of submitting.
@@ -43,6 +47,10 @@ pub trait Expressions: Send + Sync {
     /// The length typed as `text` in millimetres: a bare number is in the display unit (`scale`
     /// units per millimetre), an explicit unit is honoured. None when `text` is not a length.
     fn parse_length_mm(&self, text: &str, scale: f64) -> Option<f64>;
+    /// Step size for label scrubbing in `unit`.
+    fn scrub_step(&self, _unit: &str, _half_height_mm: Option<f64>, current_value: f64) -> f64 {
+        scrub_step(current_value)
+    }
 }
 
 /// Where a context keeps its installed [`Expressions`].

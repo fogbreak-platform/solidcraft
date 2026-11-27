@@ -33,13 +33,25 @@ pub struct Extras<'a> {
     pub card_handle: Option<&'a str>,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Shown {
     pub rect: Rect,
     pub clicked: Option<usize>,
     pub buttons: Vec<Rect>,
     pub close: Option<Rect>,
     pub closed: bool,
+}
+
+impl Default for Shown {
+    fn default() -> Self {
+        Self {
+            rect: Rect::NOTHING,
+            clicked: None,
+            buttons: Vec::new(),
+            close: None,
+            closed: false,
+        }
+    }
 }
 
 /// Fraction of `total` seconds remaining from `since` at `now`, in `0.0..=1.0`.
@@ -130,7 +142,7 @@ pub fn show(
             countdown_arc(p, cr.center(), 8.0, countdown_left(0.0, total - rem, total), t.accent);
         }
         p.text(cr.center(), Align2::CENTER_CENTER, "×", FontId::proportional(t.font_label), t.text_dim);
-        let resp = ui.interact(cr, ui.id().with(("toast_close", extras.close)), Sense::click());
+        let resp = ui.interact(cr, ui.scope_id().with(("toast_close", extras.close)), Sense::click());
         if resp.clicked() {
             closed = true;
         }
@@ -151,7 +163,7 @@ pub fn show(
             };
             p.rect(br, t.radius_sm, fill, stroke, StrokeKind::Inside);
             p.galley(pos2(br.center().x - bg.size().x * 0.5, br.center().y - bg.size().y * 0.5), bg, ink);
-            let resp = ui.interact(br, ui.id().with(("toast_btn", idx, label)), Sense::click());
+            let resp = ui.interact(br, ui.scope_id().with(("toast_btn", idx, label)), Sense::click());
             if let Some(tip) = extras.tips.get(idx).filter(|s| !s.is_empty()) {
                 let _ = resp.clone().on_hover_text(*tip);
             }

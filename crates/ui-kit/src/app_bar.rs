@@ -778,12 +778,23 @@ pub struct ViewText<'a> {
     pub switch_view: &'a str,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct ViewDropZone {
     pub document: usize,
     pub rect: Rect,
     pub view_centres: Vec<(usize, f32)>,
     pub elsewhere: Vec<(u32, Rect)>,
+}
+
+impl Default for ViewDropZone {
+    fn default() -> Self {
+        Self {
+            document: 0,
+            rect: Rect::NOTHING,
+            view_centres: Vec::new(),
+            elsewhere: Vec::new(),
+        }
+    }
 }
 
 /// One document tab.
