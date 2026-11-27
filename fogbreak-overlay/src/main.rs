@@ -21,7 +21,6 @@ mod web {
     use solidcraft_engine::Session;
     use solidcraft_engine::io::vfs;
     use solidcraft_ui_egui::{Services, SolveApp, control, documents, gpu, prefs, toolbar, window_chrome};
-    use wasm_bindgen::JsCast as _;
 
     use crate::host_bridge::{self, CommandQueue, HostCommand, LOADING_ID};
 
@@ -346,6 +345,7 @@ mod web {
 
             let mouse_canvas = canvas.clone();
             let queue_for_cb = queue.clone();
+            let boot_doc = document.clone();
             let result = eframe::WebRunner::new()
                 .start(
                     canvas.clone(),
@@ -395,7 +395,7 @@ mod web {
                         let mouse_buttons = crate::mouse_buttons::install(&window, &mouse_canvas, &cc.egui_ctx);
                         let wheel_samples = crate::wheel_samples::install(&window);
 
-                        if let Some(el) = document.get_element_by_id(LOADING_ID) {
+                        if let Some(el) = boot_doc.get_element_by_id(LOADING_ID) {
                             el.remove();
                         }
                         let mut caps: Vec<String> = solidcraft_engine::cmd::command_specs()
