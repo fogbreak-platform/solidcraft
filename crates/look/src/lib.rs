@@ -120,7 +120,7 @@ pub mod pointer {
 }
 
 pub mod compass {
-    use egui::{Color32, FontId, Painter, Pos2, Vec3};
+    use egui::{Color32, FontId, Painter, Pos2};
     use solidcraft_theme::Tokens;
 
     #[allow(clippy::too_many_arguments)]
@@ -128,9 +128,9 @@ pub mod compass {
         painter: &Painter,
         center: Pos2,
         name: &str,
-        _dir: Vec3,
+        _dir: [f64; 3],
         at: Pos2,
-        _depth: f32,
+        _depth: f64,
         hovered: bool,
         tokens: Tokens,
         scale: f32,
