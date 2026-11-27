@@ -33,7 +33,7 @@
   "prefs.graphics_card": "Kad grafik",
   "prefs.graphics_card_auto": "Automatik",
   "prefs.graphics_card_missing": "Kad grafik yang disimpan tidak tersedia; Automatik digunakan.",
-  "prefs.graphics_card_restart": "Berkuat kuasa selepas SolidCraft dimulakan semula. WGPU_ADAPTER_NAME mengatasi pilihan ini.",
+  "prefs.graphics_card_restart": "Berkuat kuasa selepas Fogbreak Solid dimulakan semula. WGPU_ADAPTER_NAME mengatasi pilihan ini.",
   "prefs.graphics_card_unused": "Kad grafik yang disimpan tidak digunakan untuk tetingkap ini; kad yang sedang digunakan dipaparkan dalam Bantuan › Tentang dan dalam bar status. Cuba Automatik, atau tetapkan WGPU_ADAPTER_NAME kepada bahagian unik pada nama kad itu.",
   "prefs.history_origin_bodies_note": "Sejarah di sebelah kiri atau di bawah pelayar bermula dengan folder Jasad bagi komponen aktif dan Titik Asal, lengkap dengan ikon mata dan menunya seperti dalam pelayar. Sejarah di bahagian bawah tidak berubah.",
   "prefs.history_play_button_note": "Meletakkan Main Sejarah di antara Undur satu langkah dan Maju satu langkah dalam kawalan Sejarah. Anda juga boleh klik kanan pada kawalan untuk memapar atau menyembunyikannya.",

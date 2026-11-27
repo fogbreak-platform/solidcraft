@@ -33,7 +33,7 @@
   "prefs.graphics_card": "Grafikkort",
   "prefs.graphics_card_auto": "Automatisk",
   "prefs.graphics_card_missing": "Det gemte grafikkort er ikke tilgængeligt. Automatisk bruges i stedet.",
-  "prefs.graphics_card_restart": "Træder i kraft efter genstart af SolidCraft. WGPU_ADAPTER_NAME tilsidesætter dette valg.",
+  "prefs.graphics_card_restart": "Træder i kraft efter genstart af Fogbreak Solid. WGPU_ADAPTER_NAME tilsidesætter dette valg.",
   "prefs.graphics_card_unused": "Det gemte grafikkort blev ikke brugt til dette vindue. Kortet i brug vises i Hjælp › Om og i statuslinjen. Prøv Automatisk, eller sæt WGPU_ADAPTER_NAME til en entydig del af kortets navn.",
   "prefs.history_origin_bodies_note": "Historikken til venstre eller under modeltræet starter med den aktive komponents mappe Emner og Nulpunktet med deres øjne og menuer som i modeltræet. Historikken nederst er uændret.",
   "prefs.history_play_button_note": "Placerer Afspil historik mellem Gå ét trin tilbage og Gå ét trin frem i historikkens kontroller. Du kan også højreklikke på kontrollerne for at vise eller skjule knappen.",

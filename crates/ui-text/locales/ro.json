@@ -33,7 +33,7 @@
   "prefs.graphics_card": "Placă video",
   "prefs.graphics_card_auto": "Automat",
   "prefs.graphics_card_missing": "Placa video salvată nu este disponibilă; se folosește Automat.",
-  "prefs.graphics_card_restart": "Intră în vigoare după repornirea SolidCraft. WGPU_ADAPTER_NAME suprascrie această alegere.",
+  "prefs.graphics_card_restart": "Intră în vigoare după repornirea Fogbreak Solid. WGPU_ADAPTER_NAME suprascrie această alegere.",
   "prefs.graphics_card_unused": "Placa video salvată nu a fost folosită pentru această fereastră; placa în uz este afișată în Ajutor › Despre și în bara de stare. Încercați Automat sau setați WGPU_ADAPTER_NAME la o parte unică din numele plăcii.",
   "prefs.history_origin_bodies_note": "Istoricul din stânga sau de sub navigator începe cu dosarul Corpuri al componentei active și cu Originea, cu ochii și meniurile lor ca în navigator. Istoricul din partea de jos rămâne neschimbat.",
   "prefs.history_play_button_note": "Plasează Redă istoricul între Un pas înapoi și Un pas înainte în comenzile Istoricului. Puteți și să faceți clic dreapta pe comenzi pentru a-l afișa sau ascunde.",

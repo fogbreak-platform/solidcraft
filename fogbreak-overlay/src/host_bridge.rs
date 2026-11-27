@@ -3,11 +3,13 @@
 #![forbid(unsafe_code)]
 
 use std::cell::RefCell;
+use std::pin::Pin;
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, TryRecvError, channel};
 
 use js_sys::{Array, Function, Object, Promise, Reflect, Uint8Array};
 use serde_json::{Value, json};
+use solidcraft_engine::io::vfs;
 use wasm_bindgen::JsCast as _;
 use wasm_bindgen::JsValue;
 use wasm_bindgen::closure::Closure;
@@ -43,6 +45,9 @@ pub enum HostCommand {
     OpenBytes {
         name: String,
         bytes: Vec<u8>,
+    },
+    SetTheme {
+        dark: bool,
     },
 }
 
@@ -96,8 +101,10 @@ pub fn find_page_canvas() -> Result<web_sys::HtmlCanvasElement, String> {
     Ok(canvas)
 }
 
-pub fn listen_open(canvas: &web_sys::HtmlCanvasElement, queue: CommandQueue, ctx: egui::Context) {
-    let cb = Closure::<dyn FnMut(web_sys::Event)>::new(move |ev: web_sys::Event| {
+pub fn listen_host_events(canvas: &web_sys::HtmlCanvasElement, queue: CommandQueue, ctx: egui::Context) {
+    let q_open = queue.clone();
+    let c_open = ctx.clone();
+    let on_open = Closure::<dyn FnMut(web_sys::Event)>::new(move |ev: web_sys::Event| {
         let Ok(custom) = ev.dyn_into::<web_sys::CustomEvent>() else { return };
         let detail = custom.detail();
         let name = Reflect::get(&detail, &"name".into())
@@ -108,13 +115,33 @@ pub fn listen_open(canvas: &web_sys::HtmlCanvasElement, queue: CommandQueue, ctx
         if let Ok(bytes_val) = Reflect::get(&detail, &"bytes".into()) {
             let bytes = Uint8Array::new(&bytes_val).to_vec();
             if !bytes.is_empty() {
-                queue.push(HostCommand::OpenBytes { name, bytes });
-                ctx.request_repaint();
+                q_open.push(HostCommand::OpenBytes { name, bytes });
+                c_open.request_repaint();
             }
         }
     });
-    let _ = canvas.add_event_listener_with_callback("open", cb.as_ref().unchecked_ref());
-    cb.forget();
+    let _ = canvas.add_event_listener_with_callback("open", on_open.as_ref().unchecked_ref());
+    on_open.forget();
+
+    let on_theme = Closure::<dyn FnMut(web_sys::Event)>::new(move |ev: web_sys::Event| {
+        let Ok(custom) = ev.dyn_into::<web_sys::CustomEvent>() else { return };
+        let detail = custom.detail();
+        let dark = Reflect::get(&detail, &"dark".into())
+            .ok()
+            .and_then(|v| v.as_bool())
+            .or_else(|| {
+                Reflect::get(&detail, &"theme".into())
+                    .ok()
+                    .and_then(|v| v.as_string())
+                    .map(|s| s.eq_ignore_ascii_case("dark"))
+            });
+        if let Some(dark) = dark {
+            queue.push(HostCommand::SetTheme { dark });
+            ctx.request_repaint();
+        }
+    });
+    let _ = canvas.add_event_listener_with_callback("theme", on_theme.as_ref().unchecked_ref());
+    on_theme.forget();
 }
 
 pub fn emit_ready(capabilities: &[String]) {
@@ -170,6 +197,116 @@ pub fn emit_handoff(target_shore: &str, artifact_name: &str, format: &str, bytes
     let _ = Reflect::set(&detail, &"format".into(), &JsValue::from_str(format));
     let _ = Reflect::set(&detail, &"bytes".into(), &arr.into());
     dispatch_canvas_event("handoff", &detail.into());
+}
+
+pub fn emit_plugin_run(plugin_id: &str, entry: &str, params: &Value) -> Result<(), String> {
+    let payload = json!({
+        "engineId": ENGINE_ID,
+        "pluginId": plugin_id,
+        "entry": entry,
+        "params": params,
+    });
+    let js_detail = to_js(&payload);
+    dispatch_canvas_event("plugin-run", &js_detail);
+    if let Some(window) = web_sys::window() {
+        let init = web_sys::CustomEventInit::new();
+        init.set_detail(&js_detail);
+        init.set_bubbles(false);
+        init.set_cancelable(false);
+        if let Ok(ev) = web_sys::CustomEvent::new_with_event_init_dict("fogbreak:solid-plugin-run", &init) {
+            let _ = window.dispatch_event(&ev);
+        }
+        if let Ok(host) = Reflect::get(&window, &JsValue::from_str(HOST_KEY))
+            && let Ok(cb_val) = Reflect::get(&host, &"__onPluginRun".into())
+            && let Ok(cb) = cb_val.dyn_into::<Function>()
+        {
+            let _ = cb.call1(&host, &js_detail);
+        }
+    }
+    Ok(())
+}
+
+pub fn trigger_download(name: &str, bytes: &[u8]) -> Result<(), String> {
+    let doc = web_sys::window().and_then(|w| w.document()).ok_or("no browser document")?;
+    let parts = Array::new();
+    parts.push(&Uint8Array::from(bytes));
+    let opts = web_sys::BlobPropertyBag::new();
+    opts.set_type("application/octet-stream");
+    let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(&parts, &opts).map_err(|e| format!("{e:?}"))?;
+    let url = web_sys::Url::create_object_url_with_blob(&blob).map_err(|e| format!("{e:?}"))?;
+    let a: web_sys::HtmlAnchorElement = doc
+        .create_element("a")
+        .map_err(|e| format!("{e:?}"))?
+        .dyn_into()
+        .map_err(|_| "no anchor element".to_string())?;
+    a.set_href(&url);
+    a.set_download(name);
+    a.click();
+    let revoke = Closure::once_into_js(move || {
+        let _ = web_sys::Url::revoke_object_url(&url);
+    });
+    if let Some(w) = web_sys::window() {
+        let _ = w.set_timeout_with_callback_and_timeout_and_arguments_0(revoke.unchecked_ref(), 10_000);
+    }
+    Ok(())
+}
+
+pub fn open_bytes_in_tab(name: &str, media_type: &str, bytes: &[u8]) -> Result<(), String> {
+    let window = web_sys::window().ok_or("no browser window")?;
+    let parts = Array::new();
+    parts.push(&Uint8Array::from(bytes));
+    let opts = web_sys::BlobPropertyBag::new();
+    opts.set_type(media_type);
+    let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(&parts, &opts).map_err(|e| format!("{e:?}"))?;
+    let url = web_sys::Url::create_object_url_with_blob(&blob).map_err(|e| format!("{e:?}"))?;
+    let opened = window.open_with_url_and_target(&url, "_blank").map_err(|e| format!("{e:?}"))?;
+    if opened.is_none() {
+        let _ = web_sys::Url::revoke_object_url(&url);
+        return Err(format!("Browser blocked opening {name}; allow pop-ups or download instead."));
+    }
+    let revoke = Closure::once_into_js(move || {
+        let _ = web_sys::Url::revoke_object_url(&url);
+    });
+    let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(revoke.unchecked_ref(), 60_000);
+    Ok(())
+}
+
+pub fn pick_upload(exts: &[&str]) -> Pin<Box<dyn std::future::Future<Output = Option<String>>>> {
+    let accept = if exts.is_empty() {
+        ".sc,.step,.stp,.iges,.igs,.stl,.obj,.3mf,.glb,.svg,.dxf,.json".to_string()
+    } else {
+        exts.iter().map(|e| format!(".{}", e.trim_start_matches('.'))).collect::<Vec<_>>().join(",")
+    };
+    Box::pin(async move {
+        let doc = web_sys::window().and_then(|w| w.document())?;
+        let input = doc.create_element("input").ok()?.dyn_into::<web_sys::HtmlInputElement>().ok()?;
+        input.set_type("file");
+        input.set_accept(&accept);
+        let _ = input.set_attribute("style", "display:none");
+        doc.body()?.append_child(&input).ok()?;
+        let promise = js_sys::Promise::new(&mut |resolve: Function, _reject: Function| {
+            let done = Closure::once_into_js(move |event: web_sys::Event| {
+                let file = event.target().and_then(|t| t.dyn_into::<web_sys::HtmlInputElement>().ok()).and_then(|el| {
+                    el.set_onchange(None);
+                    el.set_oncancel(None);
+                    el.remove();
+                    el.files().and_then(|list| list.get(0))
+                });
+                let _ = resolve.call1(&JsValue::UNDEFINED, &file.map_or(JsValue::NULL, JsValue::from));
+            });
+            input.set_onchange(Some(done.unchecked_ref()));
+            input.set_oncancel(Some(done.unchecked_ref()));
+        });
+        input.click();
+        let val = JsFuture::from(promise).await.ok()?;
+        let file = val.dyn_into::<web_sys::File>().ok()?;
+        let name = file.name();
+        let buf = JsFuture::from(file.array_buffer()).await.ok()?;
+        let bytes = Uint8Array::new(&buf).to_vec();
+        let path = format!("/upload/{name}");
+        vfs::insert(&path, bytes);
+        Some(path)
+    })
 }
 
 fn dispatch_canvas_event(name: &str, detail: &JsValue) {
@@ -263,6 +400,21 @@ pub fn install_rpc(queue: CommandQueue, ctx: egui::Context) {
             dispatch_req(q.clone(), c.clone(), "__ui_inspect".to_string(), parse_params(&params))
         });
         let _ = Reflect::set(&handle, &"uiInspect".into(), f.as_ref().unchecked_ref());
+        f.forget();
+    }
+
+    {
+        let q = queue.clone();
+        let c = ctx.clone();
+        let f = Closure::<dyn Fn(JsValue) -> Promise>::new(move |val: JsValue| {
+            let dark = val.as_bool().unwrap_or_else(|| {
+                val.as_string().is_some_and(|s| s.eq_ignore_ascii_case("dark"))
+            });
+            q.push(HostCommand::SetTheme { dark });
+            c.request_repaint();
+            future_to_promise(async move { Ok(JsValue::from_bool(dark)) })
+        });
+        let _ = Reflect::set(&handle, &"setTheme".into(), f.as_ref().unchecked_ref());
         f.forget();
     }
 

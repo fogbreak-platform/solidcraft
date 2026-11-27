@@ -33,7 +33,7 @@
   "prefs.graphics_card": "Grafička kartica",
   "prefs.graphics_card_auto": "Automatski",
   "prefs.graphics_card_missing": "Spremljena grafička kartica nije dostupna; koristi se Automatski.",
-  "prefs.graphics_card_restart": "Stupa na snagu nakon ponovnog pokretanja SolidCrafta. WGPU_ADAPTER_NAME ima prednost nad ovim odabirom.",
+  "prefs.graphics_card_restart": "Stupa na snagu nakon ponovnog pokretanja Fogbreak Solida. WGPU_ADAPTER_NAME ima prednost nad ovim odabirom.",
   "prefs.graphics_card_unused": "Spremljena grafička kartica nije korištena za ovaj prozor; kartica koja se koristi prikazana je u Pomoć › O programu i u statusnoj traci. Pokušajte s opcijom Automatski ili postavite WGPU_ADAPTER_NAME na jedinstveni dio naziva kartice.",
   "prefs.history_origin_bodies_note": "Vremenska traka lijevo ili ispod stabla modela počinje mapom Tijela aktivne komponente i Ishodištem, s njihovim okom i izbornicima kao u stablu modela. Vremenska traka na dnu ostaje nepromijenjena.",
   "prefs.history_play_button_note": "Postavlja Reproduciraj vremensku traku između tipki Jedan korak natrag i Jedan korak naprijed u kontrolama vremenske trake. Možete i desnim klikom na kontrole prikazati ili sakriti tipku.",

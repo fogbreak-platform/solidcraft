@@ -643,7 +643,7 @@ fn body(app: &mut SolveApp, ui: &mut egui::Ui, width: f32, version: &str) {
     let gap = t.space_24 + t.space_2;
     let sections = [
         ("app_bar.commands", &["documents", "home", "save", "undo", "redo", "assistant", "settings", "help"][..]),
-        ("app_bar.links", &["report", "donate", "discord", "version"][..]),
+        ("app_bar.links", &["report", "version"][..]),
         ("app_bar.layout", &["separator", "space"][..]),
     ];
     let quick: Vec<_> =

@@ -933,7 +933,7 @@ fn rail(app: &SolveApp) -> Vec<start_page::RailItem<'_, FileAction>> {
         ("home:settings", app.tr("home.settings").into(), format!("{primary},"), None, true, FileAction::Settings),
         ("home:shortcuts", app.tr("home.shortcuts").into(), String::new(), None, true, FileAction::Shortcuts),
         ("home:crashes", app.tr("home.crashes").into(), String::new(), None, true, FileAction::Crashes),
-        ("home:about", app.tr_label("About SolidCraft").into(), String::new(), None, true, FileAction::About),
+        ("home:about", app.tr_label("About Fogbreak Solid").into(), String::new(), None, true, FileAction::About),
     ];
     let mut rail = Vec::with_capacity(nav.len() + 2 + crate::links::LINKS.len() + 1);
     for (index, (id, label, shortcut, section, enabled, chosen)) in nav.into_iter().enumerate() {

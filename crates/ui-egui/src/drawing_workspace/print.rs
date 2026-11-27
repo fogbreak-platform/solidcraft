@@ -37,7 +37,7 @@ fn private_folder() -> std::io::Result<std::path::PathBuf> {
     for _ in 0..64 {
         let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let stamp = web_time::SystemTime::now().duration_since(web_time::UNIX_EPOCH).map_or(0, |d| d.subsec_nanos());
-        let folder = base.join(format!("SolidCraft print {}-{n}-{stamp:x}", std::process::id()));
+        let folder = base.join(format!("Fogbreak Solid print {}-{n}-{stamp:x}", std::process::id()));
         // Only Unix sets the folder's mode, so only Unix needs a mutable builder (an unused `mut`
         // fails the Windows lint).
         #[cfg(unix)]

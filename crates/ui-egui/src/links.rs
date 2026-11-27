@@ -10,8 +10,8 @@
 use crate::SolveApp;
 use crate::prefs::Prefs;
 
-pub const KOFI_URL: &str = "https://ko-fi.com/bherbruck";
-pub const DISCORD_URL: &str = "https://discord.gg/FtU4NQNVDH";
+pub const KOFI_URL: &str = "";
+pub const DISCORD_URL: &str = "";
 
 /// One link and every place that shows it.
 pub struct Link {
@@ -38,40 +38,7 @@ pub struct Link {
     pub hide: fn(&mut Prefs),
 }
 
-pub const LINKS: &[Link] = &[
-    Link {
-        id: "kofi",
-        url: KOFI_URL,
-        icon: "kofi",
-        menu: "links.kofi_menu",
-        button: "links.kofi_button",
-        label: "links.kofi_label",
-        tip: "links.kofi_tip",
-        hide_tip: "links.kofi_hide",
-        name: "links.kofi_name",
-        hide_name: "links.kofi_hide_name",
-        named: true,
-        fill: solidcraft_ui_kit::app_bar::brand::KOFI,
-        shown: |p| p.show_donate_button,
-        hide: |p| p.show_donate_button = false,
-    },
-    Link {
-        id: "discord",
-        url: DISCORD_URL,
-        icon: "discord",
-        menu: "links.discord_menu",
-        button: "links.discord_button",
-        label: "links.discord_label",
-        tip: "links.discord_tip",
-        hide_tip: "links.discord_hide",
-        name: "links.discord_name",
-        hide_name: "links.discord_hide_name",
-        named: false,
-        fill: solidcraft_ui_kit::app_bar::brand::DISCORD,
-        shown: |p| p.show_discord_button,
-        hide: |p| p.show_discord_button = false,
-    },
-];
+pub const LINKS: &[Link] = &[];
 
 pub fn by_id(id: &str) -> Option<&'static Link> {
     LINKS.iter().find(|l| l.id == id)

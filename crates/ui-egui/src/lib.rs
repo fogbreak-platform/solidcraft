@@ -593,6 +593,8 @@ pub struct Services {
     /// Where the ticket server's sign-in is kept: the system keyring (the browser's storage on
     /// the web). Never a plain file.
     pub ticket_secrets: Option<std::sync::Arc<dyn agent_chat::backend::Secrets>>,
+    /// Cloud runner callback for built-in browser plugins (`plugin_id`, `entry`, `params`).
+    pub run_cloud_plugin: Option<Box<dyn Fn(&str, &str, &Value) -> Result<(), String>>>,
 }
 
 /// The view before a sketch opened and the view that faced the sketch then (#7038).
@@ -1309,12 +1311,12 @@ impl SolveApp {
                 Ok(solidcraft_viewport_gpu::view::MsaaCheck::Fallback) => {
                     built.target.samples = 1;
                     msaa_fallback = true;
-                    eprintln!("SolidCraft graphics: anti-aliasing check failed at {}x and passed at 1x; using 1x for this session", scene.samples);
+                    eprintln!("Fogbreak Solid graphics: anti-aliasing check failed at {}x and passed at 1x; using 1x for this session", scene.samples);
                 }
                 Ok(solidcraft_viewport_gpu::view::MsaaCheck::FailedAtOne) => {
-                    eprintln!("SolidCraft graphics: anti-aliasing check also failed at 1x; keeping {}x", scene.samples);
+                    eprintln!("Fogbreak Solid graphics: anti-aliasing check also failed at 1x; keeping {}x", scene.samples);
                 }
-                Err(error) => eprintln!("SolidCraft graphics: anti-aliasing check error; keeping {}x: {error}", scene.samples),
+                Err(error) => eprintln!("Fogbreak Solid graphics: anti-aliasing check error; keeping {}x: {error}", scene.samples),
             }
         }
         WgpuBuilt { built, blur: scene.depth.is_some() && window.depth.is_none() && window.samples == 1, msaa_fallback }
@@ -1608,7 +1610,15 @@ impl SolveApp {
         }
         if id.eq_ignore_ascii_case("plugin.run")
             || solidcraft_engine::plugin::resolve_call(&self.session, id, &params).map_err(|e| e.to_string())?.is_some()
+            || (cfg!(target_arch = "wasm32") && plugins::is_wasm_builtin_command(id))
         {
+            #[cfg(target_arch = "wasm32")]
+            if let Some((plugin_id, entry, run_params)) = plugins::resolve_cloud_call(id, &params)
+                && let Some(runner) = &self.services.run_cloud_plugin
+            {
+                runner(&plugin_id, &entry, &run_params)?;
+                return Ok(json!({ "dispatched": true, "cloud": true, "plugin": plugin_id, "entry": entry }));
+            }
             let key = if cfg!(target_arch = "wasm32") { "ui.plugins_desktop" } else { "ui.plugin_standalone" };
             return Err(self.tr(key).into());
         }

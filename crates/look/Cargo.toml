@@ -1,6 +1,6 @@
 [package]
 name = "solidcraft-look"
-description = "Clean-room MIT OR Apache-2.0 Fogbreak look shim"
+description = "Clean-room MIT OR Apache-2.0 Fogbreak Solid look (icons, glyphs, fonts, Tidal Strata themes)"
 version.workspace = true
 edition.workspace = true
 license = "MIT OR Apache-2.0"
@@ -11,3 +11,7 @@ workspace = true
 [dependencies]
 egui = { workspace = true }
 solidcraft-theme = { workspace = true }
+solidcraft-ui-kit = { workspace = true }
+
+[build-dependencies]
+toml = { workspace = true }

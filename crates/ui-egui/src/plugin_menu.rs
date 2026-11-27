@@ -766,11 +766,8 @@ pub(crate) struct RibbonButton {
 }
 
 /// The ribbon's Plugins group: one button per command of each plugin that is turned on, in the
-/// menu's order. Empty on the web build, which runs no plugins.
+/// menu's order. Includes built-in cloud-backed plugins in browser builds.
 pub(crate) fn ribbon_buttons(app: &SolveApp) -> Vec<RibbonButton> {
-    if cfg!(target_arch = "wasm32") {
-        return Vec::new();
-    }
     let mut buttons = Vec::new();
     for plugin in app.plugin_menu.listed.iter().filter(|p| shown(app, p)) {
         for entry in &plugin.entries {
@@ -789,7 +786,7 @@ pub(crate) fn ribbon_buttons(app: &SolveApp) -> Vec<RibbonButton> {
 
 /// Read the installed plugins when they have not been read since they last changed.
 pub(crate) fn ensure_listed(app: &mut SolveApp) {
-    if !app.plugin_menu.loaded && !cfg!(target_arch = "wasm32") {
+    if !app.plugin_menu.loaded {
         refresh(app);
     }
 }
@@ -828,11 +825,15 @@ pub(crate) fn list(app: &SolveApp, dir: Option<&Path>) -> Vec<Listed> {
 pub(crate) fn rows(app: &SolveApp) -> Vec<crate::app_bar::FileRow> {
     use crate::app_bar::{FileItem, FileRow};
     let item = |id: String, label: String, enabled: bool| FileRow::Item(FileItem { id, label, key: String::new(), icon: String::new(), enabled });
-    let mut rows = vec![
-        item(INSTALL.into(), app.tr("ui.plugin_menu_install").into(), true),
-        item(LAST_REPORT.into(), app.tr("ui.plugin_menu_last_report").into(), app.import_report.is_some()),
-        FileRow::Separator,
-    ];
+    let mut rows = if cfg!(target_arch = "wasm32") {
+        Vec::new()
+    } else {
+        vec![
+            item(INSTALL.into(), app.tr("ui.plugin_menu_install").into(), true),
+            item(LAST_REPORT.into(), app.tr("ui.plugin_menu_last_report").into(), app.import_report.is_some()),
+            FileRow::Separator,
+        ]
+    };
     if app.plugin_menu.listed.iter().all(|plugin| plugin.entries.is_empty()) {
         rows.push(item("empty".into(), app.tr("ui.plugin_menu_empty").into(), false));
     } else if !app.plugin_menu.listed.iter().any(|p| shown(app, p)) {
@@ -879,6 +880,7 @@ pub(crate) fn toggle_below(app: &mut SolveApp, ctx: &egui::Context, rect: egui::
 /// Read the installed plugins again, as the menu shows them when it opens.
 pub(crate) fn refresh(app: &mut SolveApp) {
     app.plugin_menu.listed = list(app, app.session.plugin_state.plugins_dir().as_deref());
+    app.plugin_menu.loaded = true;
 }
 
 /// Run the Plugins menu's row `id` (from the menu or the File submenu).
@@ -1737,7 +1739,7 @@ pub(crate) fn preview_commands(app: &SolveApp) -> Option<(u64, String, Vec<(Stri
         Some(id) => app.plugin_menu.dialogs.iter().find(|d| d.id == id),
         None => app.plugin_menu.dialogs.iter().rev().find(|d| d.session == app.session.uid),
     }?;
-    if dialog.read || dialog.opens.is_some() || !dialog.preview || dialog.running.is_some() {
+    if dialog.read || dialog.opens.is_some() || !dialog.preview || dialog.running.is_some() || dialog.plugin.path.starts_with("cloud://") {
         return None;
     }
     let params = dialog.ready(app).ok()?;
@@ -1797,6 +1799,18 @@ pub(crate) fn run_dialog(app: &mut SolveApp, id: u64) -> Result<(), String> {
         keep_picks(app, &d);
     }
     let Some(dialog) = app.plugin_menu.dialogs.iter().find(|d| d.id == id) else { return Ok(()) };
+    if dialog.plugin.path.starts_with("cloud://") {
+        let plugin_id = dialog.plugin.id.clone();
+        let entry = dialog.entry.clone();
+        let label = dialog.label.clone();
+        let Some(runner) = &app.services.run_cloud_plugin else {
+            return Err(app.tr("ui.plugins_desktop").into());
+        };
+        runner(&plugin_id, &entry, &params)?;
+        app.plugin_menu.dialogs.retain(|d| d.id != id);
+        app.set_status(format!("Dispatched {label} via Cloud Runner"), false);
+        return Ok(());
+    }
     // An importer: choose the file, then open it as a new design on the file worker, as File ›
     // Open does, with the options from this dialog.
     if let Some(extensions) = dialog.opens.clone() {

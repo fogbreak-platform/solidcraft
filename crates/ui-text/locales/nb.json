@@ -33,7 +33,7 @@
   "prefs.graphics_card": "Grafikkort",
   "prefs.graphics_card_auto": "Automatisk",
   "prefs.graphics_card_missing": "Det lagrede grafikkortet er utilgjengelig. Automatisk brukes i stedet.",
-  "prefs.graphics_card_restart": "Trer i kraft etter at SolidCraft er startet på nytt. WGPU_ADAPTER_NAME overstyrer dette valget.",
+  "prefs.graphics_card_restart": "Trer i kraft etter at Fogbreak Solid er startet på nytt. WGPU_ADAPTER_NAME overstyrer dette valget.",
   "prefs.graphics_card_unused": "Det lagrede grafikkortet ble ikke brukt for dette vinduet. Kortet som er i bruk, vises i Hjelp › Om og i statuslinjen. Prøv Automatisk, eller sett WGPU_ADAPTER_NAME til en unik del av kortets navn.",
   "prefs.history_origin_bodies_note": "Tidslinjen til venstre eller under modelltreet starter med Kropper-mappen til den aktive komponenten og Origo, med øyne og menyer som i modelltreet. Tidslinjen nederst er uendret.",
   "prefs.history_play_button_note": "Plasserer Spill av tidslinje mellom Gå ett trinn tilbake og Gå ett trinn frem i tidslinjekontrollene. Du kan også høyreklikke på kontrollene for å vise eller skjule den.",

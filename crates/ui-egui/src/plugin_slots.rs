@@ -3,7 +3,6 @@ use std::path::{Path, PathBuf};
 use std::sync::mpsc::{Receiver, TryRecvError};
 
 use crate::{SolveApp, plugins, ui_kit};
-#[cfg(not(target_arch = "wasm32"))]
 use solidcraft_engine::plugin::UiSlot;
 
 #[derive(Clone)]
@@ -38,10 +37,10 @@ struct Inventory {
 }
 
 /// Preferences reuses discovery's package snapshot instead of hashing components every frame.
-pub(crate) fn preferences_inventory(app: &mut SolveApp, dir: &Path) -> Vec<plugins::Plugin> {
-    if app.plugin_slots.inventory.as_ref().is_none_or(|inventory| inventory.root.as_deref() != Some(dir)) {
-        let (plugins, skipped) = plugins::inventory(Some(dir), app.session.plugin_state.packages.values());
-        app.plugin_slots.inventory = Some(Inventory { root: Some(dir.to_path_buf()), plugins, skipped });
+pub(crate) fn preferences_inventory(app: &mut SolveApp, dir: Option<&Path>) -> Vec<plugins::Plugin> {
+    if app.plugin_slots.inventory.as_ref().is_none_or(|inventory| inventory.root.as_deref() != dir) {
+        let (plugins, skipped) = plugins::inventory(dir, app.session.plugin_state.packages.values());
+        app.plugin_slots.inventory = Some(Inventory { root: dir.map(Path::to_path_buf), plugins, skipped });
     }
     app.plugin_slots.inventory.as_ref().map(|inventory| inventory.plugins.clone()).unwrap_or_default()
 }
@@ -67,7 +66,6 @@ pub(crate) fn menu_name(name: &str) -> Option<&'static str> {
         _ => None,
     }
 }
-#[cfg(not(target_arch = "wasm32"))]
 fn declared(plugin: &plugins::Plugin) -> Vec<Item> {
     let mut items = Vec::new();
     for entry in &plugin.entries {
@@ -112,14 +110,15 @@ pub(crate) fn invalidate(app: &mut SolveApp) {
 }
 
 fn discovered(app: &mut SolveApp, inventory: Inventory) {
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        app.plugin_slots.items = inventory.plugins.iter().flat_map(declared).take(8192).collect();
-    }
+    app.plugin_slots.items = inventory.plugins.iter().flat_map(declared).take(8192).collect();
     app.plugin_slots.inventory = Some(inventory);
 }
 pub(crate) fn refresh(app: &mut SolveApp) {
     if cfg!(target_arch = "wasm32") {
+        if app.plugin_slots.inventory.is_none() {
+            let (plugins, skipped) = plugins::inventory(None, app.session.plugin_state.packages.values());
+            discovered(app, Inventory { root: None, plugins, skipped });
+        }
         return;
     }
     let now = crate::now_ms();
@@ -404,7 +403,7 @@ mod tests {
         refresh(&mut h.app);
         wait_for_discovery(&mut h.app);
         assert_eq!(items(&h.app, Slot::Menu("Help"))[0].command, "helper.report");
-        let preferences = preferences_inventory(&mut h.app, &h.dir.join("installed"));
+        let preferences = preferences_inventory(&mut h.app, Some(&h.dir.join("installed")));
         assert_eq!(preferences.len(), 1, "Preferences includes the same inspected package as the slots and Plugins menu");
         assert_eq!(preferences[0].entries[0].name, "report");
         assert_eq!(preferences[0].path, dir.to_string_lossy());

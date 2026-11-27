@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/*", "apps/solidcraft-cli", "xtask", "fogbreak-overlay"]
 # Third-party code kept with local fixes (vendor/), the vendored SolidCore kernel (solidcore/),
 # and excluded legacy UI frontends (replaced by clean-room Fogbreak overlay).
-exclude = ["solidcore", "vendor", "crates/ui-egui", "apps/solidcraft", "apps/solidcraft-web", "apps/ui-kit-gallery"]
+exclude = ["solidcore", "vendor", "apps/solidcraft", "apps/solidcraft-web", "apps/ui-kit-gallery"]
 
 [workspace.package]
 version = "0.46.2"

@@ -1,6 +1,6 @@
 [package]
 name = "fogbreak-solid"
-description = "Fogbreak Solid Studio (browser WebGPU with WebGL2 fallback, page canvas host)"
+description = "Fogbreak Solid Studio (full native CAD interface, WebGPU with WebGL2 fallback, page canvas host)"
 version.workspace = true
 edition.workspace = true
 license = "MIT OR Apache-2.0"
@@ -18,14 +18,18 @@ path = "src/main.rs"
 egui = { workspace = true }
 egui-wgpu = { workspace = true }
 log = { workspace = true }
+percent-encoding = "2"
 serde_json = { workspace = true }
+solidcraft-control = { workspace = true }
 solidcraft-doc = { workspace = true }
 solidcraft-engine = { workspace = true }
 solidcraft-io = { workspace = true }
+solidcraft-look = { workspace = true }
 solidcraft-theme = { workspace = true }
+solidcraft-ui-egui = { workspace = true }
+solidcraft-ui-text = { workspace = true }
 solidcraft-viewport = { workspace = true }
-solidcraft-viewport-egui = { workspace = true }
-solidcraft-viewport-gpu = { workspace = true }
+url = "2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit"] }
@@ -33,15 +37,34 @@ js-sys = "0.3"
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = [
-    "Window",
-    "Document",
-    "Element",
-    "HtmlElement",
-    "HtmlCanvasElement",
-    "Location",
-    "MediaQueryList",
-    "Event",
-    "EventTarget",
+    "AddEventListenerOptions",
+    "Blob",
+    "BlobPropertyBag",
     "CustomEvent",
     "CustomEventInit",
+    "Document",
+    "Element",
+    "Event",
+    "EventTarget",
+    "File",
+    "FileList",
+    "HtmlAnchorElement",
+    "HtmlCanvasElement",
+    "HtmlElement",
+    "HtmlInputElement",
+    "KeyboardEvent",
+    "Location",
+    "MediaQueryList",
+    "MouseEvent",
+    "Navigator",
+    "Node",
+    "PointerEvent",
+    "Storage",
+    "Touch",
+    "TouchEvent",
+    "TouchList",
+    "Url",
+    "VisibilityState",
+    "WheelEvent",
+    "Window",
 ] }

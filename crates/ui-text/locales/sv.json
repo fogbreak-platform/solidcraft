@@ -33,7 +33,7 @@
   "prefs.graphics_card": "Grafikkort",
   "prefs.graphics_card_auto": "Automatisk",
   "prefs.graphics_card_missing": "Det sparade grafikkortet är inte tillgängligt; Automatisk används.",
-  "prefs.graphics_card_restart": "Träder i kraft efter att SolidCraft startats om. WGPU_ADAPTER_NAME åsidosätter detta val.",
+  "prefs.graphics_card_restart": "Träder i kraft efter att Fogbreak Solid startats om. WGPU_ADAPTER_NAME åsidosätter detta val.",
   "prefs.graphics_card_unused": "Det sparade grafikkortet användes inte för det här fönstret. Kortet som används visas i Hjälp › Om och i statusfältet. Prova Automatisk, eller ange WGPU_ADAPTER_NAME som en unik del av kortets namn.",
   "prefs.history_origin_bodies_note": "Historiken till vänster eller under webbläsaren börjar med den aktiva komponentens mapp Kroppar och Origo, med sina ögon och menyer som i webbläsaren. Historiken längst ned är oförändrad.",
   "prefs.history_play_button_note": "Placerar Spela upp historik mellan Gå ett steg bakåt och Gå ett steg framåt i historikkontrollerna. Du kan också högerklicka på kontrollerna för att visa eller dölja den.",

@@ -93,7 +93,7 @@ fn start(app: &mut SolveApp, ctx: &egui::Context, r: &Request) {
         status(
             &ask.id,
             "awaiting_user",
-            "The report dialog is open in SolidCraft. Only the person can include their model or crash report: ask them to tick it there and press Send report.",
+            "The report dialog is open in Fogbreak Solid. Only the person can include their model or crash report: ask them to tick it there and press Send report.",
             json!({}),
         );
         return;
@@ -138,7 +138,7 @@ fn report_progress(app: &mut SolveApp) {
             status(
                 &id,
                 "queued",
-                &format!("Could not reach the ticket server ({why}); the report is kept in SolidCraft until the person sends it again."),
+                &format!("Could not reach the ticket server ({why}); the report is kept in Fogbreak Solid until the person sends it again."),
                 json!({}),
             );
             app.tickets.agent = None;

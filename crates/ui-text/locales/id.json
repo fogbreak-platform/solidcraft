@@ -33,7 +33,7 @@
   "prefs.graphics_card": "Kartu grafis",
   "prefs.graphics_card_auto": "Otomatis",
   "prefs.graphics_card_missing": "Kartu grafis yang disimpan tidak tersedia; Otomatis dipakai.",
-  "prefs.graphics_card_restart": "Berlaku setelah SolidCraft dimulai ulang. WGPU_ADAPTER_NAME menggantikan pilihan ini.",
+  "prefs.graphics_card_restart": "Berlaku setelah Fogbreak Solid dimulai ulang. WGPU_ADAPTER_NAME menggantikan pilihan ini.",
   "prefs.graphics_card_unused": "Kartu grafis yang tersimpan tidak dipakai untuk jendela ini; kartu yang sedang dipakai ditampilkan di Bantuan › Tentang dan di bilah status. Coba Otomatis, atau atur WGPU_ADAPTER_NAME ke bagian unik dari nama kartu.",
   "prefs.history_origin_bodies_note": "Riwayat di sisi kiri atau di bawah penjelajah dimulai dengan folder Bodi komponen aktif dan Origin, lengkap dengan ikon mata dan menunya seperti di penjelajah. Riwayat di bagian bawah tidak berubah.",
   "prefs.history_play_button_note": "Menempatkan Putar Riwayat di antara Mundur satu langkah dan Maju satu langkah pada kontrol Riwayat. Anda juga dapat mengeklik kanan kontrol untuk menampilkan atau menyembunyikannya.",

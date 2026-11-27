@@ -50,7 +50,7 @@
   "prefs.graphics_card": "Scheda grafica",
   "prefs.graphics_card_auto": "Automatica",
   "prefs.graphics_card_missing": "La scheda grafica salvata non è disponibile; viene usata Automatica.",
-  "prefs.graphics_card_restart": "Ha effetto dopo il riavvio di SolidCraft. WGPU_ADAPTER_NAME prevale su questa scelta.",
+  "prefs.graphics_card_restart": "Ha effetto dopo il riavvio di Fogbreak Solid. WGPU_ADAPTER_NAME prevale su questa scelta.",
   "prefs.graphics_card_unused": "La scheda grafica salvata non è stata usata per questa finestra; la scheda in uso è indicata in Aiuto › Informazioni su e nella barra di stato. Prova Automatica, oppure imposta WGPU_ADAPTER_NAME su una parte univoca del nome della scheda.",
   "prefs.graphics_page.current_view": "Vista corrente",
   "prefs.graphics_page.fastest": "Più veloce",

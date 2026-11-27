@@ -216,7 +216,12 @@ pub(crate) fn inventory<'a>(dir: Option<&Path>, inspected: impl Iterator<Item = 
         }
     }
     let (installed, skipped) = dir.map(scan_packages).unwrap_or_default();
-    for (plugin, executable) in found.into_iter().chain(installed) {
+    let builtin: Vec<(Plugin, bool)> = if cfg!(target_arch = "wasm32") && dir.is_none() {
+        wasm_builtin_plugins().into_iter().map(|plugin| (plugin, true)).collect()
+    } else {
+        Vec::new()
+    };
+    for (plugin, executable) in found.into_iter().chain(installed).chain(builtin) {
         match packages.entry(plugin.id.clone()) {
             std::collections::btree_map::Entry::Vacant(entry) => {
                 entry.insert((plugin, executable));
@@ -233,6 +238,227 @@ pub(crate) fn inventory<'a>(dir: Option<&Path>, inspected: impl Iterator<Item = 
     let mut plugins: Vec<_> = packages.into_values().map(|(plugin, _)| plugin).collect();
     plugins.sort_by(|a, b| a.name.cmp(&b.name).then_with(|| a.id.cmp(&b.id)));
     (plugins, skipped)
+}
+
+pub(crate) fn wasm_builtin_plugins() -> Vec<Plugin> {
+    use solidcraft_engine::plugin::{Effect, Entry, EntryKind};
+    let make = |id: &str, name: &str, description: &str, entry_name: &str, input_schema: serde_json::Value| -> Plugin {
+        Plugin {
+            id: id.into(),
+            name: name.into(),
+            version: "1.0.0".into(),
+            description: description.into(),
+            path: format!("cloud://{id}"),
+            approval: String::new(),
+            disabled: false,
+            groups: Default::default(),
+            entries: vec![Entry {
+                name: entry_name.into(),
+                kind: EntryKind::Command,
+                extensions: Vec::new(),
+                effect: Effect::Edit,
+                input_schema,
+                dialog_hook: false,
+                slots: Vec::new(),
+            }],
+            images: Default::default(),
+            swatches: Default::default(),
+        }
+    };
+    vec![
+        make(
+            "opengrid",
+            "openGrid",
+            "Modular wall-mount tiles and snap connectors.",
+            "board",
+            serde_json::json!({
+                "type": "object",
+                "required": ["tilesX", "tilesY"],
+                "properties": {
+                    "tilesX": { "type": "integer", "title": "Columns", "minimum": 1, "maximum": 20, "default": 2 },
+                    "tilesY": { "type": "integer", "title": "Rows", "minimum": 1, "maximum": 20, "default": 2 },
+                    "variant": { "type": "string", "title": "Tile variant", "enum": ["full", "lite"], "default": "full" },
+                    "screwHoles": { "type": "boolean", "title": "Screw holes", "default": true },
+                    "chamfers": { "type": "boolean", "title": "Corner chamfers", "default": true }
+                }
+            }),
+        ),
+        make(
+            "solidcraft-gridfinity",
+            "Gridfinity",
+            "Modular 42 mm bins and magnet baseplates.",
+            "generate",
+            serde_json::json!({
+                "type": "object",
+                "required": ["unitsX", "unitsY"],
+                "properties": {
+                    "kind": { "type": "string", "title": "Part type", "enum": ["bin", "baseplate"], "default": "bin" },
+                    "unitsX": { "type": "integer", "title": "Grid units X", "minimum": 1, "maximum": 10, "default": 2 },
+                    "unitsY": { "type": "integer", "title": "Grid units Y", "minimum": 1, "maximum": 10, "default": 1 },
+                    "heightUnits": { "type": "integer", "title": "Height units (7 mm)", "minimum": 1, "maximum": 12, "default": 3 },
+                    "magnets": { "type": "boolean", "title": "Magnet holes", "default": false },
+                    "screws": { "type": "boolean", "title": "M3 screw holes", "default": false },
+                    "label": { "type": "boolean", "title": "Label tab", "default": true },
+                    "dividersX": { "type": "integer", "title": "X dividers", "minimum": 0, "maximum": 8, "default": 1 }
+                }
+            }),
+        ),
+        make(
+            "custom-threads",
+            "Custom Threads",
+            "Metric and imperial internal/external threads on a cylindrical face.",
+            "preset-thread",
+            serde_json::json!({
+                "type": "object",
+                "required": ["size"],
+                "properties": {
+                    "face": { "type": "string", "title": "Target face", "maxLength": 64, "default": "" },
+                    "standard": { "type": "string", "title": "Thread standard", "enum": ["metric", "unc", "unf", "npt"], "default": "metric" },
+                    "size": { "type": "string", "title": "Thread size", "maxLength": 16, "default": "M8" },
+                    "pitchMm": { "type": "number", "title": "Pitch (mm)", "minimum": 0.2, "maximum": 6.0, "default": 1.25 },
+                    "lengthMm": { "type": "number", "title": "Length (mm)", "minimum": 1.0, "maximum": 300.0, "default": 15.0 },
+                    "internal": { "type": "boolean", "title": "Internal thread", "default": false },
+                    "clearanceMm": { "type": "number", "title": "Print clearance (mm)", "minimum": 0.0, "maximum": 1.0, "default": 0.15 }
+                }
+            }),
+        ),
+        make(
+            "solidcraft-3d-printing-holes",
+            "3D-Printing Holes",
+            "Print-tuned clearance, counterbore, heat-set, and teardrop holes.",
+            "hole",
+            serde_json::json!({
+                "type": "object",
+                "required": ["kind", "diameterMm"],
+                "properties": {
+                    "face": { "type": "string", "title": "Target face", "maxLength": 64, "default": "" },
+                    "kind": { "type": "string", "title": "Hole type", "enum": ["clearance", "counterbore", "heat-set", "teardrop"], "default": "heat-set" },
+                    "diameterMm": { "type": "number", "title": "Diameter (mm)", "minimum": 0.5, "maximum": 100.0, "default": 4.2 },
+                    "depthMm": { "type": "number", "title": "Depth (mm)", "minimum": 0.5, "maximum": 200.0, "default": 5.7 },
+                    "teardrop": { "type": "boolean", "title": "Teardrop top", "default": false },
+                    "toleranceMm": { "type": "number", "title": "Tolerance (mm)", "minimum": 0.0, "maximum": 1.0, "default": 0.1 }
+                }
+            }),
+        ),
+        make(
+            "filament-swatch",
+            "Filament Swatch",
+            "Labelled filament sample card with stepped thickness bands.",
+            "generate",
+            serde_json::json!({
+                "type": "object",
+                "required": ["label"],
+                "properties": {
+                    "label": { "type": "string", "title": "Swatch label", "maxLength": 24, "default": "PLA+" },
+                    "material": { "type": "string", "title": "Material", "enum": ["pla", "petg", "abs", "asa", "tpu", "pa", "pc"], "default": "pla" },
+                    "colorHex": { "type": "string", "title": "Color hex", "maxLength": 7, "default": "#087F9C" },
+                    "steps": { "type": "integer", "title": "Thickness steps", "minimum": 1, "maximum": 10, "default": 5 },
+                    "widthMm": { "type": "number", "title": "Width (mm)", "minimum": 20.0, "maximum": 120.0, "default": 60.0 },
+                    "heightMm": { "type": "number", "title": "Height (mm)", "minimum": 20.0, "maximum": 120.0, "default": 40.0 }
+                }
+            }),
+        ),
+        make(
+            "mesh-solidify",
+            "Mesh Solidify",
+            "Convert a mesh or point cloud into a watertight printable solid.",
+            "solidify",
+            serde_json::json!({
+                "type": "object",
+                "required": ["sourceFile"],
+                "properties": {
+                    "sourceFile": { "type": "string", "title": "Source mesh or cloud", "maxLength": 200, "default": "model.stl" },
+                    "voxelSizeMm": { "type": "number", "title": "Voxel size (mm)", "minimum": 0.05, "maximum": 10.0, "default": 2.0 },
+                    "thicknessMm": { "type": "number", "title": "Shell thickness (mm)", "minimum": 0.2, "maximum": 20.0, "default": 2.4 },
+                    "fillHoles": { "type": "boolean", "title": "Fill holes", "default": true },
+                    "decimate": { "type": "number", "title": "Decimate ratio", "minimum": 0.0, "maximum": 1.0, "default": 0.25 }
+                }
+            }),
+        ),
+        make(
+            "solidinserts",
+            "Threaded Inserts",
+            "Heat-set and press-fit insert pockets sized per metric spec.",
+            "insert",
+            serde_json::json!({
+                "type": "object",
+                "required": ["insert"],
+                "properties": {
+                    "face": { "type": "string", "title": "Target face", "maxLength": 64, "default": "" },
+                    "insert": { "type": "string", "title": "Insert size", "enum": ["m2", "m2.5", "m3", "m4", "m5", "m6"], "default": "m3" },
+                    "count": { "type": "integer", "title": "Insert count", "minimum": 1, "maximum": 64, "default": 4 },
+                    "depthMm": { "type": "number", "title": "Depth (mm)", "minimum": 1.0, "maximum": 50.0, "default": 5.7 },
+                    "boss": { "type": "boolean", "title": "Add boss", "default": true }
+                }
+            }),
+        ),
+        make(
+            "solidcraft-honeycomb",
+            "Honeycomb",
+            "Hexagonal cut or rib pattern across a selected face.",
+            "pattern",
+            serde_json::json!({
+                "type": "object",
+                "required": ["cellMm"],
+                "properties": {
+                    "face": { "type": "string", "title": "Target face", "maxLength": 64, "default": "" },
+                    "cellMm": { "type": "number", "title": "Cell width (mm)", "minimum": 2.0, "maximum": 100.0, "default": 8.0 },
+                    "wallMm": { "type": "number", "title": "Wall thickness (mm)", "minimum": 0.4, "maximum": 20.0, "default": 1.2 },
+                    "marginMm": { "type": "number", "title": "Margin (mm)", "minimum": 0.0, "maximum": 50.0, "default": 4.0 },
+                    "mode": { "type": "string", "title": "Pattern mode", "enum": ["cut", "rib"], "default": "cut" }
+                }
+            }),
+        ),
+        make(
+            "solidcraft-vasemaker",
+            "Vase Maker",
+            "Spiral-mode vase generator (vase_maker) with twist and ripple controls.",
+            "generate",
+            serde_json::json!({
+                "type": "object",
+                "required": ["heightMm", "baseDiameterMm"],
+                "properties": {
+                    "heightMm": { "type": "number", "title": "Height (mm)", "minimum": 10.0, "maximum": 400.0, "default": 150.0 },
+                    "baseDiameterMm": { "type": "number", "title": "Base diameter (mm)", "minimum": 10.0, "maximum": 300.0, "default": 70.0 },
+                    "topDiameterMm": { "type": "number", "title": "Top diameter (mm)", "minimum": 10.0, "maximum": 300.0, "default": 90.0 },
+                    "twistDeg": { "type": "number", "title": "Twist (deg)", "minimum": -360.0, "maximum": 360.0, "default": 90.0 },
+                    "ripples": { "type": "integer", "title": "Ripples", "minimum": 0, "maximum": 64, "default": 0 },
+                    "rippleDepthMm": { "type": "number", "title": "Ripple depth (mm)", "minimum": 0.0, "maximum": 20.0, "default": 0.0 },
+                    "sides": { "type": "integer", "title": "Polygon sides", "minimum": 3, "maximum": 128, "default": 6 }
+                }
+            }),
+        ),
+    ]
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+pub(crate) fn is_wasm_builtin_command(id: &str) -> bool {
+    resolve_cloud_call(id, &serde_json::Value::Null).is_some()
+}
+
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+pub(crate) fn resolve_cloud_call(id: &str, params: &serde_json::Value) -> Option<(String, String, serde_json::Value)> {
+    let normalize_id = |raw: &str| match raw {
+        "vase_maker" | "vase-maker" => "solidcraft-vasemaker",
+        other => other,
+    };
+    let builtins = wasm_builtin_plugins();
+    if id.eq_ignore_ascii_case("plugin.run") {
+        let plugin_id = params.get("plugin").or_else(|| params.get("id")).and_then(serde_json::Value::as_str).map(normalize_id)?;
+        let plugin = builtins.into_iter().find(|p| p.id == plugin_id)?;
+        let entry = params
+            .get("entry")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned)
+            .or_else(|| plugin.entries.first().map(|e| e.name.clone()))?;
+        let run_params = params.get("params").cloned().unwrap_or_else(|| serde_json::json!({}));
+        return Some((plugin.id, entry, run_params));
+    }
+    let (raw_plugin, raw_entry) = id.split_once('.')?;
+    let plugin_id = normalize_id(raw_plugin);
+    let plugin = builtins.into_iter().find(|p| p.id == plugin_id)?;
+    let entry = plugin.entries.iter().find(|e| e.name == raw_entry).or_else(|| plugin.entries.first())?;
+    Some((plugin.id, entry.name.clone(), params.clone()))
 }
 
 /// Exact integer controls retain all u64 fuel values, without a float slider conversion.
@@ -570,7 +796,7 @@ fn matches_query(plugin: &Plugin, query: &str) -> bool {
         .any(|text| text.to_lowercase().contains(&query))
 }
 
-/// The Plugins page. Desktop only: the browser build has no per-user plugin folder.
+/// The Plugins page. Shows installed local packages on desktop and cloud-backed built-ins on web.
 pub fn page(app: &mut SolveApp, ui: &mut egui::Ui) {
     let dir = if cfg!(target_arch = "wasm32") { None } else { app.session.plugin_state.plugins_dir() };
     page_in_dir(app, ui, dir.as_deref());
@@ -579,19 +805,22 @@ pub fn page(app: &mut SolveApp, ui: &mut egui::Ui) {
 fn page_in_dir(app: &mut SolveApp, ui: &mut egui::Ui, dir: Option<&Path>) {
     crate::ui_kit::settings_page(ui, |ui| {
         crate::ui_kit::settings_heading(ui, solidcraft_ui_text::tr("ui.plugins"), solidcraft_ui_text::tr("prefs.plugins_intro"));
-        let Some(dir) = dir else {
+        if dir.is_none() && !cfg!(target_arch = "wasm32") {
             ui.label(solidcraft_ui_text::tr("ui.plugins_desktop"));
             return;
-        };
-        // Install plugin…: pick a .zip, review what it asks for, install it.
-        let install = crate::ui_kit::icon_label_button(ui, solidcraft_ui_text::tr("plugin_install.menu"), "import", !busy(app), false);
-        crate::scenario::publish_target("prefs:plugins:install", install.rect);
-        if install.clicked() {
-            crate::plugin_install::start(app);
         }
-        ui.add_space(8.0);
+        if let Some(dir) = dir {
+            // Install plugin…: pick a .zip, review what it asks for, install it.
+            let install = crate::ui_kit::icon_label_button(ui, solidcraft_ui_text::tr("plugin_install.menu"), "import", !busy(app), false);
+            crate::scenario::publish_target("prefs:plugins:install", install.rect);
+            if install.clicked() {
+                crate::plugin_install::start(app);
+            }
+            ui.add_space(8.0);
+            let _ = dir;
+        }
         let t = solidcraft_theme::Tokens::get();
-        let path = dir.display().to_string();
+        let path = dir.map(|d| d.display().to_string()).unwrap_or_default();
         let searching = crate::ui_kit::settings_search::querying(ui);
         // The page's own box is for browsing Plugins. The dialog search is the filter while it is active.
         if !searching {
@@ -652,7 +881,9 @@ fn page_in_dir(app: &mut SolveApp, ui: &mut egui::Ui, dir: Option<&Path>) {
             }
         }
         ui.add_space(8.0);
-        resource_controls(app, ui);
+        if dir.is_some() {
+            resource_controls(app, ui);
+        }
         crate::ui_kit::checkbox(
             ui,
             solidcraft_ui_text::tr("prefs.plugin_remember_dialog_position"),
@@ -660,7 +891,7 @@ fn page_in_dir(app: &mut SolveApp, ui: &mut egui::Ui, dir: Option<&Path>) {
         )
         .on_hover_text(solidcraft_ui_text::tr("prefs.plugin_remember_dialog_position_help"));
         ui.add_space(8.0);
-        if !searching {
+        if !searching && let Some(dir) = dir {
             ui.horizontal(|ui| {
                 let button = crate::ui_kit::icon_label_button(ui, solidcraft_ui_text::tr("prefs.plugins_show_folder"), "folder", true, false)
                     .backing_on_hover_text(solidcraft_ui_text::format("ui.plugins_note", &[("path", &path)]));
@@ -682,6 +913,9 @@ fn page_in_dir(app: &mut SolveApp, ui: &mut egui::Ui, dir: Option<&Path>) {
 /// What was approved at install for `plugin`'s current package, in plain words: command groups,
 /// folders with their access, and memory. Grants made for another version count for nothing.
 pub(crate) fn approved_text(app: &SolveApp, plugin: &Plugin) -> String {
+    if plugin.path.starts_with("cloud://") {
+        return "Runs via Fogbreak Cloud Runner (schema-verified).".into();
+    }
     use solidcraft_ui_text::{format, tr};
     let Some(grants) = app.session.plugin_state.grants.get(&plugin.id).filter(|g| g.package_hash.as_deref() == Some(plugin.approval.as_str())) else {
         return tr("prefs.plugin_approved_nothing").to_string();
@@ -711,7 +945,7 @@ pub(crate) fn approved_text(app: &SolveApp, plugin: &Plugin) -> String {
     format("prefs.plugin_approved", &[("list", &parts.join(", "))])
 }
 
-fn plugin_card(app: &mut SolveApp, ui: &mut egui::Ui, dir: &Path, plugin: &Plugin) {
+fn plugin_card(app: &mut SolveApp, ui: &mut egui::Ui, dir: Option<&Path>, plugin: &Plugin) {
     use crate::ui_kit;
     let mut on = enabled(app, &plugin.id);
     let was_on = on;
@@ -720,7 +954,7 @@ fn plugin_card(app: &mut SolveApp, ui: &mut egui::Ui, dir: &Path, plugin: &Plugi
         enabled: solidcraft_ui_text::tr("prefs.plugins_enabled"),
     };
     let remove_label = app.tr("prefs.plugin_remove").to_owned();
-    let can_remove = !busy(app) && Path::new(&plugin.path) == dir.join(&plugin.id);
+    let can_remove = !busy(app) && dir.is_some_and(|dir| Path::new(&plugin.path) == dir.join(&plugin.id));
     let card = ui
         .push_id(&plugin.id, |ui| {
             ui_kit::settings_plugin_card_with_actions(
@@ -755,6 +989,7 @@ fn plugin_card(app: &mut SolveApp, ui: &mut egui::Ui, dir: &Path, plugin: &Plugi
     crate::scenario::publish_target(&format!("prefs:plugin:{}:folder", plugin.id), folder.rect);
     crate::scenario::publish_target(&format!("prefs:plugin:{}", plugin.id), check.rect);
     if folder.clicked()
+        && !plugin.path.starts_with("cloud://")
         && let Some(show) = &app.services.show_in_folder
     {
         show(&Path::new(&plugin.path).join("plugin.json").display().to_string());

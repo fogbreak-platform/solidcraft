@@ -50,7 +50,7 @@
   "prefs.graphics_card": "Placa de vídeo",
   "prefs.graphics_card_auto": "Automático",
   "prefs.graphics_card_missing": "A placa de vídeo salva não está disponível; Automático é usado.",
-  "prefs.graphics_card_restart": "Entra em vigor após reiniciar o SolidCraft. WGPU_ADAPTER_NAME substitui esta escolha.",
+  "prefs.graphics_card_restart": "Entra em vigor após reiniciar o Fogbreak Solid. WGPU_ADAPTER_NAME substitui esta escolha.",
   "prefs.graphics_card_unused": "A placa de vídeo salva não foi usada para esta janela; a placa em uso é mostrada em Ajuda › Sobre e na linha de status. Tente Automático ou defina WGPU_ADAPTER_NAME com uma parte única do nome da placa.",
   "prefs.graphics_page.current_view": "Vista atual",
   "prefs.graphics_page.fastest": "Mais rápido",

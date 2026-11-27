@@ -267,7 +267,7 @@ pub fn app_bar(app: &mut SolveApp, ui: &mut egui::Ui) {
                 items: Some(&preview_layout),
                 quick_ids: &quick_ids,
                 mark: &|painter, at| solidcraft_look::glyphs::brand_mark(painter, at),
-                name: "SolidCraft",
+                name: "Fogbreak Solid",
                 leading: (crate::library::available(app) && !app.home.open).then_some(vec2(app_bar::ITEM_HEIGHT, app_bar::ITEM_HEIGHT)),
                 home: app_bar::BarButton { id: "home", icon: "home", tip: app.tr("ui.start_page"), enabled: idle, narrow: false, wide_only: false },
                 file: app.tr("ui.file"),
@@ -761,13 +761,9 @@ pub(crate) fn file_rows(app: &SolveApp) -> Vec<app_bar::FileRow> {
     rows.push(FileRow::Separator);
     rows.push(row("document.metadata", &format!("{}…", app.tr_label("Design Properties")), "", "settings", shown));
     rows.push(FileRow::Separator);
-    // Plugins… opens Preferences on the Plugins page: install, turn on or off, and remove plugins
-    // there. The web build runs no plugins.
-    if !cfg!(target_arch = "wasm32") {
-        rows.push(row("plugins.preferences", &format!("{}…", app.tr("ui.plugins")), "", "prefs_plugins", true));
-        rows.push(FileRow::Separator);
-    }
-    // The browser can install SolidCraft as an app (`install`): only while it offers to.
+    rows.push(row("plugins.preferences", &format!("{}…", app.tr("ui.plugins")), "", "prefs_plugins", true));
+    rows.push(FileRow::Separator);
+    // The browser can install Fogbreak Solid as an app (`install`): only while it offers to.
     if crate::install::offered(app).is_some() {
         rows.push(button("install", solidcraft_ui_text::tr("install.menu"), "new", Some(solidcraft_ui_text::tr("install.button_tip"))));
     }

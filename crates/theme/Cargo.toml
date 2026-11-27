@@ -1,6 +1,6 @@
 [package]
 name = "solidcraft-theme"
-description = "Clean-room MIT OR Apache-2.0 Fogbreak theme tokens (Carmel Stone / Monterey Shale)"
+description = "The token contract UI components draw with: Fogbreak Solid light and dark Tidal Strata tokens, colour vision, tab accents and theme state"
 version.workspace = true
 edition.workspace = true
 license = "MIT OR Apache-2.0"
@@ -11,4 +11,5 @@ workspace = true
 [dependencies]
 egui = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 solidcraft-color = { workspace = true }

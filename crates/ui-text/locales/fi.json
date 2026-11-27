@@ -50,7 +50,7 @@
   "prefs.graphics_card": "Näytönohjain",
   "prefs.graphics_card_auto": "Automaattinen",
   "prefs.graphics_card_missing": "Tallennettu näytönohjain ei ole käytettävissä; käytetään automaattista.",
-  "prefs.graphics_card_restart": "Tulee voimaan, kun SolidCraft käynnistetään uudelleen. WGPU_ADAPTER_NAME ohittaa tämän valinnan.",
+  "prefs.graphics_card_restart": "Tulee voimaan, kun Fogbreak Solid käynnistetään uudelleen. WGPU_ADAPTER_NAME ohittaa tämän valinnan.",
   "prefs.graphics_card_unused": "Tallennettua näytönohjainta ei käytetty tässä ikkunassa; käytössä oleva näytönohjain näkyy kohdassa Ohje › Tietoja ja tilarivillä. Kokeile Automaattinen-asetusta tai aseta WGPU_ADAPTER_NAME yksilölliseen osaan näytönohjaimen nimestä.",
   "prefs.graphics_page.current_view": "Nykyinen näkymä",
   "prefs.graphics_page.fastest": "Nopein",

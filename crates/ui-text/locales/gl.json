@@ -33,7 +33,7 @@
   "prefs.graphics_card": "Tarxeta gráfica",
   "prefs.graphics_card_auto": "Automático",
   "prefs.graphics_card_missing": "A tarxeta gráfica gardada non está dispoñible; úsase Automático.",
-  "prefs.graphics_card_restart": "Aplícase despois de reiniciar SolidCraft. WGPU_ADAPTER_NAME anula esta opción.",
+  "prefs.graphics_card_restart": "Aplícase despois de reiniciar Fogbreak Solid. WGPU_ADAPTER_NAME anula esta opción.",
   "prefs.graphics_card_unused": "A tarxeta gráfica gardada non se usou para esta xanela; a tarxeta en uso móstrase en Axuda › Acerca de e na barra de estado. Proba Automático ou define WGPU_ADAPTER_NAME cunha parte única do nome da tarxeta.",
   "prefs.history_origin_bodies_note": "O Historial da esquerda ou baixo o navegador comeza co cartafol Corpos do compoñente activo e coa Orixe, cos seus ollos e menús coma no navegador. O Historial da parte inferior non cambia.",
   "prefs.history_play_button_note": "Coloca Reproducir o historial entre Retroceder un paso e Avanzar un paso nos controis do Historial. Tamén podes facer clic co botón dereito nos controis para mostralo ou ocultalo.",

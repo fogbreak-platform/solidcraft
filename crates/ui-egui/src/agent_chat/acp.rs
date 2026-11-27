@@ -151,7 +151,7 @@ pub fn initialize_params(version: &str) -> Value {
             "auth": {"terminal": true},
             "_meta": {"terminal-auth": true},
         },
-        "clientInfo": {"name": "solidcraft", "title": "SolidCraft", "version": version},
+        "clientInfo": {"name": "fogbreak-solid", "title": "Fogbreak Solid", "version": version},
     })
 }
 
@@ -226,13 +226,13 @@ pub fn wsl_path(path: &std::path::Path) -> std::path::PathBuf {
 
 /// What every session is told about where it is. An agent with no route for it in
 /// [`session_new_params`] doesn't get it.
-pub const SYSTEM_NOTE: &str = "You are running inside SolidCraft, a parametric 3D CAD application, as the user's assistant. \
+pub const SYSTEM_NOTE: &str = "You are running inside Fogbreak Solid, a parametric 3D CAD application, as the user's assistant. \
 The open design is reachable through the `solidcraft-app` MCP server: use its tools (list_commands, batch, execute, inspect_design, \
 measure, screenshot, set_parameter, undo, skill_reference) to read and change the design the user is looking at, and verify with \
 measure or inspect_design. Before building anything beyond one primitive, read `skill_reference` for `solidcraft-modeling` (its \
 SKILL.md has the workflow, its reference.md the command shapes and this version's traps), work the numbers out first, and after \
 each stage compare `measure` with them. Prefer one `batch` over many small calls. Saving, opening or exporting files waits for the user's approval in \
-the chat, and each message allows a limited number of changes. Don't use shell or file tools: work through the SolidCraft tools. \
+the chat, and each message allows a limited number of changes. Don't use shell or file tools: work through the Fogbreak Solid tools. \
 Keep answers short.";
 
 /// The most of the user's custom instructions (#8220) a session gets, in characters: the
@@ -247,11 +247,11 @@ pub fn system_note(instructions: &str) -> String {
     if text.is_empty() {
         return SYSTEM_NOTE.to_string();
     }
-    format!("{SYSTEM_NOTE}\n\nThe user's custom instructions, set in SolidCraft's preferences:\n{text}")
+    format!("{SYSTEM_NOTE}\n\nThe user's custom instructions, set in Fogbreak Solid's preferences:\n{text}")
 }
 
 /// The Claude Code adapter's own tools that reach the computer rather than the design: turned off
-/// for the session (`_meta.claudeCode.options.disallowedTools`), so it works through SolidCraft's.
+/// for the session (`_meta.claudeCode.options.disallowedTools`), so it works through Fogbreak Solid's.
 pub const CLAUDE_DISALLOWED_TOOLS: &[&str] =
     &["Bash", "BashOutput", "KillShell", "Read", "Write", "Edit", "MultiEdit", "NotebookEdit", "Glob", "Grep", "WebFetch", "WebSearch", "Task"];
 

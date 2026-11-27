@@ -1299,7 +1299,7 @@ fn window_bar(app: &mut SolveApp, ui: &mut Ui, id: WindowId, rect: egui::Rect, c
         crate::window_chrome::drag_area(ui, drag);
     }
     let content = layout.content;
-    let brand_end = crate::app_bar::paint_brand(ui.painter(), content, &solidcraft_look::glyphs::brand_mark, Some("SolidCraft"));
+    let brand_end = crate::app_bar::paint_brand(ui.painter(), content, &solidcraft_look::glyphs::brand_mark, Some("Fogbreak Solid"));
     let menu = egui::Rect::from_center_size(egui::pos2(content.right() - 17.0, content.center().y), egui::Vec2::splat(26.0));
     let menu_tip = app.tr("multi_window.window_menu");
     let response = ui.interact(menu, bar_menu_id(ui.ctx()), egui::Sense::click());
@@ -1704,7 +1704,7 @@ pub fn show(app: &mut SolveApp, ctx: &Context, render_state: Option<&egui_wgpu::
         let os_id = viewport_id(tab, id);
         let custom = !cfg!(target_os = "macos") || window.options.top_bar == TopBar::Edge;
         let level = if window.options.keep_on_top { egui::WindowLevel::AlwaysOnTop } else { egui::WindowLevel::Normal };
-        let mut builder = crate::window_chrome::viewport("SolidCraft", solidcraft_engine::io::APP_ID, custom)
+        let mut builder = crate::window_chrome::viewport("Fogbreak Solid", solidcraft_engine::io::APP_ID, custom)
             .with_min_inner_size([640.0, 420.0])
             .with_window_level(level);
         if cfg!(target_os = "macos") {

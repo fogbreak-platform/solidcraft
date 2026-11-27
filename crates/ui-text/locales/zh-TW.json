@@ -50,7 +50,7 @@
   "prefs.graphics_card": "顯卡",
   "prefs.graphics_card_auto": "自動",
   "prefs.graphics_card_missing": "已儲存的顯卡不可用；將使用自動選擇。",
-  "prefs.graphics_card_restart": "重啟 SolidCraft 後生效。WGPU_ADAPTER_NAME 優先於此選擇。",
+  "prefs.graphics_card_restart": "重啟 Fogbreak Solid 後生效。WGPU_ADAPTER_NAME 優先於此選擇。",
   "prefs.graphics_card_unused": "已儲存的顯卡未用於此視窗；實際使用的顯卡顯示在“ › 關於”和狀態欄中。請嘗試“自動”，或將 WGPU_ADAPTER_NAME 設為顯卡名稱中的唯一部分。",
   "prefs.graphics_page.current_view": "目前視圖",
   "prefs.graphics_page.fastest": "最快",
@@ -203,7 +203,7 @@
   "prefs.wheel": "滾輪",
   "prefs.wheel_trackpad": "滾輪與觸控板",
   "prefs.windows_smooth_window_drag": "拖曳視窗時暫停繪製，讓視窗平順移動",
-  "prefs.windows_smooth_window_drag_help": "透過標題列拖曳視窗時，SolidCraft 不會繪製任何內容，視窗會平順地跟隨指標。動畫和進度會暫停，直到放開為止。關閉時：拖曳期間 SolidCraft 會繼續繪製，視窗可能移動不平順。",
+  "prefs.windows_smooth_window_drag_help": "透過標題列拖曳視窗時，Fogbreak Solid 不會繪製任何內容，視窗會平順地跟隨指標。動畫和進度會暫停，直到放開為止。關閉時：拖曳期間 Fogbreak Solid 會繼續繪製，視窗可能移動不平順。",
   "prefs.zoom_stop_at_model": "縮放到模型表面時停止",
   "prefs.zoom_stop_at_model_tip": "3D 游標和設備應用向視圖中央的表面縮放；拖動縮放固定拖動開始時的點。關閉後可穿過模型。滾輪和捏合手勢單獨使用向游標縮放設置",
   "prefs.zoom_toward_cursor": "朝游標縮放"
