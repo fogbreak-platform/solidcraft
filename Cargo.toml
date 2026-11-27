@@ -206,12 +206,23 @@ opt-level = 2
 debug = false
 
 [profile.release]
-opt-level = 3
+opt-level = "z"
 lto = "thin"
-codegen-units = 16
+codegen-units = 1
+panic = "abort"
 # Line tables only: crash reports name file:line in their backtraces (no runtime cost; a larger
 # binary). See docs/crash-reports.md.
-debug = "line-tables-only"
+debug = false
+strip = "debuginfo"
+
+[profile.release.package.solidcore]
+codegen-units = 16
+
+[profile.release.package.solidcraft-ui-egui]
+codegen-units = 8
+
+[profile.release.package.solidcraft-engine]
+codegen-units = 8
 
 # Local performance work: release without its thin LTO, incremental. A rebuild after an edit
 # drops from 1.5-2 minutes to 3-10 seconds (the thin LTO link of the app was most of it), for
