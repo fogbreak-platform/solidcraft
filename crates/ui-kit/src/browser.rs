@@ -319,7 +319,7 @@ impl Rows<'_> {
     pub fn next_visible(&self) -> bool {
         let cursor = self.ui.cursor();
         let h = solidcraft_theme::Tokens::get().control_height.max(1.0);
-        let probe = egui::Rect::from_min_size(cursor.min, vec2(cursor.width().max(1.0), h));
+        let probe = egui::Rect::from_min_size(cursor.min, egui::vec2(cursor.width().max(1.0), h));
         self.ui.is_visible() && self.ui.clip_rect().intersects(probe)
     }
 
